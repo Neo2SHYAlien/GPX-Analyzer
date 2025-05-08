@@ -38,110 +38,119 @@
       const reader = new FileReader();
 
       reader.onload = function () {
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(reader.result, 'text/xml');
-        const geojson = toGeoJSON.gpx(xml);
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(reader.result, 'text/xml');
+  const geojson = toGeoJSON.gpx(xml);
 
-        const coords = geojson.features[0].geometry.coordinates;
-        let currentSegment = [];
-        let latlngs = [];
-        let elevations = [];
-        let distances = [0];
-        let gain = 0, loss = 0, totalDistance = 0;
+  const coords = geojson.features[0].geometry.coordinates;
+  let prevPt = null;
+  let prevEle = null;
+  let prevCat = null;
+  let segment = [];
 
-        const resampledLatlngs = [];
-        const resampledElevs = [];
-        let bufferDist = 0;
-        let lastPt = null;
-        let accumDist = 0;
+  let distances = [0];
+  let elevations = [];
+  let latlngs = [];
 
-        for (let i = 0; i < coords.length; i++) {
-          const [lon, lat, ele] = coords[i];
-          const curr = L.latLng(lat, lon);
+  let gain = 0, loss = 0, totalDistance = 0;
 
-          if (lastPt) {
-            const segmentDist = lastPt.distanceTo(curr);
-            bufferDist += segmentDist;
-            accumDist += segmentDist;
+  function getCategory(delta) {
+    if (delta >= 5) return 'darkred';
+    if (delta >= 2) return 'red';
+    if (delta >= 0.5) return 'orange';
+    if (delta <= -5) return 'darkgreen';
+    if (delta <= -2) return 'green';
+    if (delta <= -0.5) return 'lightgreen';
+    return 'blue';
+  }
 
-            if (bufferDist >= 100) {
-              bufferDist = 0;
-              resampledLatlngs.push([curr.lat, curr.lng]);
-              resampledElevs.push(ele);
+  for (let i = 0; i < coords.length; i++) {
+    const [lon, lat, ele] = coords[i];
+    const curr = L.latLng(lat, lon);
 
-              const delta = ele - elevations[elevations.length - 1];
-              if (delta > 0) gain += delta;
-              else loss -= delta;
+    if (prevPt) {
+      const d = prevPt.distanceTo(curr);
+      const deltaElev = ele - prevEle;
+      totalDistance += d;
 
-              distances.push(accumDist / 1000);
-              elevations.push(ele);
-              latlngs.push([curr.lat, curr.lng]);
+      const cat = getCategory(deltaElev);
 
-              let color = "blue";
-              if (delta >= 5) color = "darkred";
-              else if (delta >= 2) color = "red";
-              else if (delta >= 0.5) color = "orange";
-              else if (delta <= -5) color = "darkgreen";
-              else if (delta <= -2) color = "green";
-              else if (delta <= -0.5) color = "lightgreen";
+      if (prevCat === null) {
+        prevCat = cat;
+      }
 
-              if (latlngs.length > 1) {
-                L.polyline([latlngs[latlngs.length - 2], latlngs[latlngs.length - 1]], {
-                  color,
-                  weight: 4
-                }).addTo(map);
-              }
-            }
-          } else {
-            resampledLatlngs.push([curr.lat, curr.lng]);
-            resampledElevs.push(ele);
-            elevations.push(ele);
-            latlngs.push([curr.lat, curr.lng]);
-          }
-
-          lastPt = curr;
+      if (cat !== prevCat) {
+        if (segment.length > 1) {
+          L.polyline(segment, { color: prevCat, weight: 4 }).addTo(map);
         }
+        segment = [ [curr.lat, curr.lng] ];
+        prevCat = cat;
+      } else {
+        segment.push([curr.lat, curr.lng]);
+      }
 
-        totalDistance = accumDist;
-        map.fitBounds(L.polyline(latlngs).getBounds());
+      if (deltaElev > 0) gain += deltaElev;
+      else loss -= deltaElev;
 
-        const ctx = document.getElementById('elevationChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: distances,
-            datasets: [{
-              label: 'Elevation (m)',
-              data: elevations,
-              borderColor: 'green',
-              fill: true,
-              backgroundColor: 'rgba(0, 128, 0, 0.1)',
-              tension: 0.1
-            }]
-          },
-          options: {
-            scales: {
-              x: { title: { display: true, text: 'Distance (km)' } },
-              y: { title: { display: true, text: 'Elevation (m)' } }
-            },
-            plugins: {
-              legend: { display: false },
-              tooltip: { mode: 'index', intersect: false }
-            }
-          }
-        });
+      distances.push(distances[distances.length - 1] + d / 1000);
+      elevations.push(ele);
+      latlngs.push([curr.lat, curr.lng]);
 
-        const minElev = Math.min(...elevations).toFixed(1);
-        const maxElev = Math.max(...elevations).toFixed(1);
+    } else {
+      segment.push([curr.lat, curr.lng]);
+      elevations.push(ele);
+      latlngs.push([curr.lat, curr.lng]);
+    }
 
-        document.getElementById('stats').innerHTML = `
-          <strong>Total Distance:</strong> ${(totalDistance / 1000).toFixed(2)} km<br>
-          <strong>Elevation Gain:</strong> ${gain.toFixed(1)} m<br>
-          <strong>Elevation Loss:</strong> ${loss.toFixed(1)} m<br>
-          <strong>Minimum Elevation:</strong> ${minElev} m<br>
-          <strong>Maximum Elevation:</strong> ${maxElev} m<br>
-        `;
-      };
+    prevPt = curr;
+    prevEle = ele;
+  }
+
+  // Final segment
+  if (segment.length > 1) {
+    L.polyline(segment, { color: prevCat, weight: 4 }).addTo(map);
+  }
+
+  map.fitBounds(L.polyline(latlngs).getBounds());
+
+  const ctx = document.getElementById('elevationChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: distances,
+      datasets: [{
+        label: 'Elevation (m)',
+        data: elevations,
+        borderColor: 'green',
+        fill: true,
+        backgroundColor: 'rgba(0, 128, 0, 0.1)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      scales: {
+        x: { title: { display: true, text: 'Distance (km)' } },
+        y: { title: { display: true, text: 'Elevation (m)' } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      }
+    }
+  });
+
+  const minElev = Math.min(...elevations).toFixed(1);
+  const maxElev = Math.max(...elevations).toFixed(1);
+
+  document.getElementById('stats').innerHTML = `
+    <strong>Total Distance:</strong> ${(totalDistance / 1000).toFixed(2)} km<br>
+    <strong>Elevation Gain:</strong> ${gain.toFixed(1)} m<br>
+    <strong>Elevation Loss:</strong> ${loss.toFixed(1)} m<br>
+    <strong>Minimum Elevation:</strong> ${minElev} m<br>
+    <strong>Maximum Elevation:</strong> ${maxElev} m<br>
+  `;
+};
+
 
       reader.readAsText(file);
     });
