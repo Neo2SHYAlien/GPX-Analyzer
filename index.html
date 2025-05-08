@@ -9,10 +9,11 @@
   <script src="https://unpkg.com/@mapbox/togeojson"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; }
-    #map { height: 400px; }
-    #container { padding: 1rem; }
-    canvas { max-width: 100%; }
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+    #map { height: 400px; margin-bottom: 20px; }
+    #container { padding: 1rem; max-width: 1000px; margin: auto; }
+    canvas { max-width: 100%; background: white; padding: 1rem; border-radius: 8px; }
+    h2, h3 { margin-top: 2rem; }
   </style>
 </head>
 <body>
@@ -20,8 +21,9 @@
     <h2>GPX Route Analyzer 🏃‍♂️📍</h2>
     <input type="file" id="gpxfile" accept=".gpx" />
     <div id="map"></div>
-    <h3>Elevation Profile</h3>
+    <h3>📈 Elevation Profile</h3>
     <canvas id="elevationChart"></canvas>
+    <h3>📊 Statistics</h3>
     <p id="stats"></p>
   </div>
 
@@ -42,7 +44,9 @@
 
         const latlngs = [];
         const elevations = [];
+        const distances = [0];
         let totalDistance = 0;
+        let gain = 0, loss = 0;
 
         const coords = geojson.features[0].geometry.coordinates;
         for (let i = 0; i < coords.length; i++) {
@@ -53,15 +57,28 @@
           if (i > 0) {
             const prev = L.latLng(latlngs[i - 1]);
             const curr = L.latLng(latlngs[i]);
-            totalDistance += prev.distanceTo(curr);
+            const segmentDistance = prev.distanceTo(curr);
+            totalDistance += segmentDistance;
+            distances.push(distances[distances.length - 1] + segmentDistance / 1000);
+
+            const deltaElev = ele - elevations[i - 1];
+            if (deltaElev > 0) gain += deltaElev;
+            else loss -= deltaElev;
+
+            let color = "blue";
+            if (deltaElev >= 5) color = "darkred";
+            else if (deltaElev >= 2) color = "red";
+            else if (deltaElev >= 0.5) color = "orange";
+            else if (deltaElev <= -5) color = "darkgreen";
+            else if (deltaElev <= -2) color = "green";
+            else if (deltaElev <= -0.5) color = "lightgreen";
+
+            L.polyline([latlngs[i - 1], latlngs[i]], { color, weight: 4 }).addTo(map);
           }
         }
 
-        L.polyline(latlngs, { color: 'blue' }).addTo(map);
         map.fitBounds(L.polyline(latlngs).getBounds());
 
-        // Elevation chart
-        const distances = latlngs.map((_, i) => i === 0 ? 0 : distances[i - 1] + L.latLng(latlngs[i]).distanceTo(latlngs[i - 1]) / 1000);
         const ctx = document.getElementById('elevationChart').getContext('2d');
         new Chart(ctx, {
           type: 'line',
@@ -71,18 +88,33 @@
               label: 'Elevation (m)',
               data: elevations,
               borderColor: 'green',
-              fill: false
+              fill: true,
+              backgroundColor: 'rgba(0, 128, 0, 0.1)',
+              tension: 0.1
             }]
           },
           options: {
             scales: {
               x: { title: { display: true, text: 'Distance (km)' } },
               y: { title: { display: true, text: 'Elevation (m)' } }
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: { mode: 'index', intersect: false }
             }
           }
         });
 
-        document.getElementById('stats').innerText = `Total Distance: ${(totalDistance / 1000).toFixed(2)} km`;
+        const minElev = Math.min(...elevations).toFixed(1);
+        const maxElev = Math.max(...elevations).toFixed(1);
+
+        document.getElementById('stats').innerHTML = `
+          <strong>Total Distance:</strong> ${(totalDistance / 1000).toFixed(2)} km<br>
+          <strong>Elevation Gain:</strong> ${gain.toFixed(1)} m<br>
+          <strong>Elevation Loss:</strong> ${loss.toFixed(1)} m<br>
+          <strong>Minimum Elevation:</strong> ${minElev} m<br>
+          <strong>Maximum Elevation:</strong> ${maxElev} m<br>
+        `;
       };
 
       reader.readAsText(file);
