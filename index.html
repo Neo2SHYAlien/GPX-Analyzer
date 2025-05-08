@@ -30,8 +30,7 @@
   <script>
     const map = L.map('map').setView([0, 0], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      opacity: 0.4
+      attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     document.getElementById('gpxfile').addEventListener('change', function (e) {
@@ -43,45 +42,67 @@
         const xml = parser.parseFromString(reader.result, 'text/xml');
         const geojson = toGeoJSON.gpx(xml);
 
-        const latlngs = [];
-        const elevations = [];
-        const distances = [0];
-        let totalDistance = 0;
-        let gain = 0, loss = 0;
-
         const coords = geojson.features[0].geometry.coordinates;
+        let currentSegment = [];
+        let latlngs = [];
+        let elevations = [];
+        let distances = [0];
+        let gain = 0, loss = 0, totalDistance = 0;
+
+        const resampledLatlngs = [];
+        const resampledElevs = [];
+        let bufferDist = 0;
+        let lastPt = null;
+        let accumDist = 0;
+
         for (let i = 0; i < coords.length; i++) {
           const [lon, lat, ele] = coords[i];
-          latlngs.push([lat, lon]);
-          elevations.push(ele);
+          const curr = L.latLng(lat, lon);
 
-          if (i > 0) {
-            const prev = L.latLng(latlngs[i - 1]);
-            const curr = L.latLng(latlngs[i]);
-            const segmentDistance = prev.distanceTo(curr);
-            totalDistance += segmentDistance;
-            distances.push(distances[distances.length - 1] + segmentDistance / 1000);
+          if (lastPt) {
+            const segmentDist = lastPt.distanceTo(curr);
+            bufferDist += segmentDist;
+            accumDist += segmentDist;
 
-            const deltaElev = ele - elevations[i - 1];
-            if (deltaElev > 0) gain += deltaElev;
-            else loss -= deltaElev;
+            if (bufferDist >= 100) {
+              bufferDist = 0;
+              resampledLatlngs.push([curr.lat, curr.lng]);
+              resampledElevs.push(ele);
 
-            let color = "gray";
-            if (deltaElev >= 8) color = "darkred";
-            else if (deltaElev >= 5) color = "red";
-            else if (deltaElev >= 3) color = "orangered";
-            else if (deltaElev >= 1.5) color = "orange";
-            else if (deltaElev >= 0.5) color = "gold";
-            else if (deltaElev > -0.5) color = "lightblue";
-            else if (deltaElev > -1.5) color = "lightgreen";
-            else if (deltaElev > -3) color = "green";
-            else if (deltaElev > -5) color = "darkgreen";
-            else color = "#004d00";
+              const delta = ele - elevations[elevations.length - 1];
+              if (delta > 0) gain += delta;
+              else loss -= delta;
 
-            L.polyline([latlngs[i - 1], latlngs[i]], { color, weight: 4 }).addTo(map);
+              distances.push(accumDist / 1000);
+              elevations.push(ele);
+              latlngs.push([curr.lat, curr.lng]);
+
+              let color = "blue";
+              if (delta >= 5) color = "darkred";
+              else if (delta >= 2) color = "red";
+              else if (delta >= 0.5) color = "orange";
+              else if (delta <= -5) color = "darkgreen";
+              else if (delta <= -2) color = "green";
+              else if (delta <= -0.5) color = "lightgreen";
+
+              if (latlngs.length > 1) {
+                L.polyline([latlngs[latlngs.length - 2], latlngs[latlngs.length - 1]], {
+                  color,
+                  weight: 4
+                }).addTo(map);
+              }
+            }
+          } else {
+            resampledLatlngs.push([curr.lat, curr.lng]);
+            resampledElevs.push(ele);
+            elevations.push(ele);
+            latlngs.push([curr.lat, curr.lng]);
           }
+
+          lastPt = curr;
         }
 
+        totalDistance = accumDist;
         map.fitBounds(L.polyline(latlngs).getBounds());
 
         const ctx = document.getElementById('elevationChart').getContext('2d');
