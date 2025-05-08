@@ -1,107 +1,146 @@
-<script>
-  const map = L.map('map').setView([0, 0], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    opacity: 0.4
-  }).addTo(map);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPX Route Analyzer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@mapbox/togeojson"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+    #map { height: 400px; margin-bottom: 20px; }
+    #container { padding: 1rem; max-width: 1000px; margin: auto; }
+    canvas { max-width: 100%; background: white; padding: 1rem; border-radius: 8px; }
+    h2, h3 { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h2>GPX Route Analyzer 🏃‍♂️📍</h2>
+    <input type="file" id="gpxfile" accept=".gpx" />
+    <div id="map"></div>
+    <h3>📈 Elevation Profile</h3>
+    <canvas id="elevationChart"></canvas>
+    <h3>📊 Statistics</h3>
+    <p id="stats"></p>
+  </div>
 
-  // Paleta Viridis (10 tonos)
-  const viridis = [
-    '#440154', '#482777', '#3E4989', '#31688E',
-    '#26828E', '#1F9E89', '#35B779', '#6CCE59',
-    '#B4DE2C', '#FDE725'
-  ];
+  <script>
+    const map = L.map('map').setView([0, 0], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      opacity: 0.4
+    }).addTo(map);
 
-  // Devuelve un color interpolado de la paleta Viridis
-  function getColorFromElevation(elev, minElev, maxElev) {
-    const ratio = (elev - minElev) / (maxElev - minElev);
-    const index = Math.max(0, Math.min(viridis.length - 1, Math.floor(ratio * (viridis.length - 1))));
-    return viridis[index];
-  }
+    const viridis = [
+      '#440154', '#482777', '#3E4989', '#31688E',
+      '#26828E', '#1F9E89', '#35B779', '#6CCE59',
+      '#B4DE2C', '#FDE725'
+    ];
 
-  document.getElementById('gpxfile').addEventListener('change', function (e) {
-    const file = e.target.files[0];
-    const reader = new FileReader();
+    function getColorFromElevation(elev, minElev, maxElev) {
+      const ratio = (elev - minElev) / (maxElev - minElev);
+      const index = Math.max(0, Math.min(viridis.length - 1, Math.floor(ratio * (viridis.length - 1))));
+      return viridis[index];
+    }
 
-    reader.onload = function () {
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(reader.result, 'text/xml');
-      const geojson = toGeoJSON.gpx(xml);
-
-      const latlngs = [];
-      const elevations = [];
-      const distances = [0];
-      let totalDistance = 0;
-      let gain = 0, loss = 0;
-
-      const coords = geojson.features[0].geometry.coordinates;
-      for (let i = 0; i < coords.length; i++) {
-        const [lon, lat, ele] = coords[i];
-        latlngs.push([lat, lon]);
-        elevations.push(ele);
-
-        if (i > 0) {
-          const prev = L.latLng(latlngs[i - 1]);
-          const curr = L.latLng(latlngs[i]);
-          const segmentDistance = prev.distanceTo(curr);
-          totalDistance += segmentDistance;
-          distances.push(distances[distances.length - 1] + segmentDistance / 1000);
-
-          const deltaElev = ele - elevations[i - 1];
-          if (deltaElev > 0) gain += deltaElev;
-          else loss -= deltaElev;
-        }
+    function movingAverage(arr, windowSize = 7) {
+      const smoothed = [];
+      for (let i = 0; i < arr.length; i++) {
+        const start = Math.max(0, i - Math.floor(windowSize / 2));
+        const end = Math.min(arr.length, i + Math.ceil(windowSize / 2));
+        const segment = arr.slice(start, end);
+        const avg = segment.reduce((a, b) => a + b, 0) / segment.length;
+        smoothed.push(avg);
       }
+      return smoothed;
+    }
 
-      // Elevation stats
-      const minElev = Math.min(...elevations);
-      const maxElev = Math.max(...elevations);
+    document.getElementById('gpxfile').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
 
-      // Dibujar segmentos con color por elevación
-      for (let i = 1; i < latlngs.length; i++) {
-        const avgElev = (elevations[i] + elevations[i - 1]) / 2;
-        const color = getColorFromElevation(avgElev, minElev, maxElev);
-        L.polyline([latlngs[i - 1], latlngs[i]], { color, weight: 4 }).addTo(map);
-      }
+      reader.onload = function () {
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(reader.result, 'text/xml');
+        const geojson = toGeoJSON.gpx(xml);
 
-      map.fitBounds(L.polyline(latlngs).getBounds());
+        const latlngs = [];
+        const elevations = [];
+        const distances = [0];
+        let totalDistance = 0;
+        let gain = 0, loss = 0;
 
-      // Gráfico de elevación
-      const ctx = document.getElementById('elevationChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: distances,
-          datasets: [{
-            label: 'Elevation (m)',
-            data: elevations,
-            borderColor: 'green',
-            fill: true,
-            backgroundColor: 'rgba(0, 128, 0, 0.1)',
-            tension: 0.1
-          }]
-        },
-        options: {
-          scales: {
-            x: { title: { display: true, text: 'Distance (km)' } },
-            y: { title: { display: true, text: 'Elevation (m)' } }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: { mode: 'index', intersect: false }
+        const coords = geojson.features[0].geometry.coordinates;
+        for (let i = 0; i < coords.length; i++) {
+          const [lon, lat, ele] = coords[i];
+          latlngs.push([lat, lon]);
+          elevations.push(ele);
+
+          if (i > 0) {
+            const prev = L.latLng(latlngs[i - 1]);
+            const curr = L.latLng(latlngs[i]);
+            const segmentDistance = prev.distanceTo(curr);
+            totalDistance += segmentDistance;
+            distances.push(distances[distances.length - 1] + segmentDistance / 1000);
+
+            const deltaElev = ele - elevations[i - 1];
+            if (deltaElev > 0) gain += deltaElev;
+            else loss -= deltaElev;
           }
         }
-      });
 
-      document.getElementById('stats').innerHTML = `
-        <strong>Total Distance:</strong> ${(totalDistance / 1000).toFixed(2)} km<br>
-        <strong>Elevation Gain:</strong> ${gain.toFixed(1)} m<br>
-        <strong>Elevation Loss:</strong> ${loss.toFixed(1)} m<br>
-        <strong>Minimum Elevation:</strong> ${minElev.toFixed(1)} m<br>
-        <strong>Maximum Elevation:</strong> ${maxElev.toFixed(1)} m<br>
-      `;
-    };
+        const smoothedElevations = movingAverage(elevations);
+        const minElev = Math.min(...smoothedElevations);
+        const maxElev = Math.max(...smoothedElevations);
 
-    reader.readAsText(file);
-  });
-</script>
+        for (let i = 1; i < latlngs.length; i++) {
+          const avgElev = (smoothedElevations[i] + smoothedElevations[i - 1]) / 2;
+          const color = getColorFromElevation(avgElev, minElev, maxElev);
+          L.polyline([latlngs[i - 1], latlngs[i]], { color, weight: 4 }).addTo(map);
+        }
+
+        map.fitBounds(L.polyline(latlngs).getBounds());
+
+        const ctx = document.getElementById('elevationChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: distances,
+            datasets: [{
+              label: 'Elevation (m)',
+              data: smoothedElevations,
+              borderColor: 'green',
+              fill: true,
+              backgroundColor: 'rgba(0, 128, 0, 0.1)',
+              tension: 0.1
+            }]
+          },
+          options: {
+            scales: {
+              x: { title: { display: true, text: 'Distance (km)' } },
+              y: { title: { display: true, text: 'Elevation (m)' } }
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: { mode: 'index', intersect: false }
+            }
+          }
+        });
+
+        document.getElementById('stats').innerHTML = `
+          <strong>Total Distance:</strong> ${(totalDistance / 1000).toFixed(2)} km<br>
+          <strong>Elevation Gain:</strong> ${gain.toFixed(1)} m<br>
+          <strong>Elevation Loss:</strong> ${loss.toFixed(1)} m<br>
+          <strong>Minimum Elevation:</strong> ${minElev.toFixed(1)} m<br>
+          <strong>Maximum Elevation:</strong> ${maxElev.toFixed(1)} m<br>
+        `;
+      };
+
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
