@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPX Route Analyzer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@mapbox/togeojson"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; }
+    #map { height: 400px; }
+    #container { padding: 1rem; }
+    canvas { max-width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h2>GPX Route Analyzer 🏃‍♂️📍</h2>
+    <input type="file" id="gpxfile" accept=".gpx" />
+    <div id="map"></div>
+    <h3>Elevation Profile</h3>
+    <canvas id="elevationChart"></canvas>
+    <p id="stats"></p>
+  </div>
+
+  <script>
+    const map = L.map('map').setView([0, 0], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    document.getElementById('gpxfile').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function () {
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(reader.result, 'text/xml');
+        const geojson = toGeoJSON.gpx(xml);
+
+        const latlngs = [];
+        const elevations = [];
+        let totalDistance = 0;
+
+        const coords = geojson.features[0].geometry.coordinates;
+        for (let i = 0; i < coords.length; i++) {
+          const [lon, lat, ele] = coords[i];
+          latlngs.push([lat, lon]);
+          elevations.push(ele);
+
+          if (i > 0) {
+            const prev = L.latLng(latlngs[i - 1]);
+            const curr = L.latLng(latlngs[i]);
+            totalDistance += prev.distanceTo(curr);
+          }
+        }
+
+        L.polyline(latlngs, { color: 'blue' }).addTo(map);
+        map.fitBounds(L.polyline(latlngs).getBounds());
+
+        // Elevation chart
+        const distances = latlngs.map((_, i) => i === 0 ? 0 : distances[i - 1] + L.latLng(latlngs[i]).distanceTo(latlngs[i - 1]) / 1000);
+        const ctx = document.getElementById('elevationChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: distances,
+            datasets: [{
+              label: 'Elevation (m)',
+              data: elevations,
+              borderColor: 'green',
+              fill: false
+            }]
+          },
+          options: {
+            scales: {
+              x: { title: { display: true, text: 'Distance (km)' } },
+              y: { title: { display: true, text: 'Elevation (m)' } }
+            }
+          }
+        });
+
+        document.getElementById('stats').innerText = `Total Distance: ${(totalDistance / 1000).toFixed(2)} km`;
+      };
+
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
