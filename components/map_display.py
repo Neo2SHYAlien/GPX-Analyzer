@@ -1,6 +1,8 @@
 import folium
 from streamlit_folium import st_folium
 from components.elevation_chart import get_smoothed_grade
+from components.utils import get_color
+
 
 def update_display_route_map(df, tile_style="OpenStreetMap", climbs_df=None, descents_df=None):
     import folium

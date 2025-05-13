@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import streamlit as st
-from components.elevation_chart import apply_slope_smoothing, get_color
 
+from components.utils import apply_slope_smoothing, get_color
 def update_plot_elevation_colored_by_slope(df, climbs_df=None, descents_df=None):
     
 
