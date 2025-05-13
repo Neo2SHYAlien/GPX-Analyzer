@@ -8,7 +8,7 @@ from components.elevation_chart import get_smoothed_grade, update_plot_elevation
 from components.map_display import display_legend, update_display_route_map
 from components.climb_detector import detect_significant_segments
 from components.utils import categorize_climb
-from components.segment_details import show_segment_details
+from components.segment_details import show_segment_summary_and_details
 
 
 st.set_page_config(layout="wide", page_title="GPX Analyzer 📍")
@@ -51,7 +51,9 @@ if uploaded_file:
                                  descents_df=descents_df,
                                  color_by_slope=show_slope_colors)
         if show_slope_colors:
-            display_legend()
+            # display_legend()
+            pass  # Legend is not implemented in this version
+        st.markdown("**Legend:**")
 
     with col2:
         st.subheader("📈 Elevation Profile")
@@ -78,8 +80,8 @@ if uploaded_file:
 
     # ───────────────────────── EXPANDERS WITH HISTOGRAMS
     st.subheader("🔎 Segment Details")
-    show_segment_details(climbs_df, df, kind="climb")
-    show_segment_details(descents_df, df, kind="descent")
+    show_segment_summary_and_details(climbs_df, df, kind="climb")
+    show_segment_summary_and_details(descents_df, df, kind="descent")
 
 else:
     st.info("Please upload a GPX file to begin.")
