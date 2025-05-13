@@ -1,6 +1,6 @@
 import streamlit as st
 from components.gpx_parser import parse_gpx
-from components.elevation_chart import plot_elevation_colored_by_slope
+from components.elevation_chart import plot_elevation_colored_by_slope, get_smoothed_grade
 from components.stats_panel import show_stats
 from components.map_display import display_route_map, display_legend
 from components.climb_detector import detect_climbs
@@ -22,6 +22,10 @@ with st.sidebar:
 if uploaded_file:
     gpx_data = uploaded_file.read().decode("utf-8")
     df, stats = parse_gpx(gpx_data)
+
+    # 🟢 Apply smoothing before detection or plotting
+    df["plot_grade"] = get_smoothed_grade(df)
+
     climbs_df = detect_climbs(df)
 
     col1, col2 = st.columns(2)
