@@ -3,6 +3,7 @@ from components.gpx_parser import parse_gpx
 from components.elevation_chart import plot_elevation_colored_by_slope
 from components.stats_panel import show_stats
 from components.map_display import display_route_map
+from components.map_display import display_legend
 
 st.set_page_config(layout="wide", page_title="GPX Analyzer 📍")
 
@@ -14,9 +15,6 @@ with st.sidebar:
 
     tile_style = st.selectbox("Map Style", [
         "OpenStreetMap",
-        "Stamen Terrain",
-        "Stamen Toner",
-        "Stamen Watercolor",
         "CartoDB positron",
         "CartoDB dark_matter"
     ])
@@ -38,6 +36,7 @@ if file1:
     with col1:
         st.subheader("🗺️ Route Map")
         display_route_map(df1, df2, tile_style)
+        display_legend()
 
 
     with col2:
