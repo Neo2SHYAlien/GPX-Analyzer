@@ -8,7 +8,7 @@ from components.core.climb_detector import detect_significant_segments
 from components.core.utils import classify_climb_category
 
 from components.ui.elevation_chart import get_smoothed_grade, update_plot_elevation_colored_by_slope
-from components.ui.map_display import update_display_route_map, display_legend
+from components.ui.map_display import update_display_route_map
 from components.ui.stats_panel import show_stats
 from components.ui.segment_details import show_segment_summary_and_details
 
