@@ -1,8 +1,8 @@
 import streamlit as st
 from components.gpx_parser import parse_gpx
-from components.elevation_chart import plot_elevation_colored_by_slope, get_smoothed_grade
+from components.elevation_chart import get_smoothed_grade
 from components.stats_panel import show_stats
-from components.map_display import display_route_map, display_legend, update_display_route_map
+from components.map_display import display_legend, update_display_route_map
 from components.climb_detector import  detect_significant_segments
 from components.elevation_chart import update_plot_elevation_colored_by_slope
 
