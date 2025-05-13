@@ -44,7 +44,11 @@ def update_display_route_map(df, tile_style="OpenStreetMap", climbs_df=None, des
             ).add_to(m)
 
     folium.LayerControl().add_to(m)
-    st_folium(m, width=800, height=500, returned_objects=[], use_container_width=True, key="main_map", return_last_map=False)
+    try:
+        st_folium(m, width=800, height=500, use_container_width=True, key="main_map", return_last_map=False)
+    except TypeError:
+        st_folium(m, width=800, height=500, key="main_map")
+
     
 from streamlit.components.v1 import html
 

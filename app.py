@@ -1,5 +1,3 @@
-# FILE: app.py
-
 import streamlit as st
 import matplotlib.pyplot as plt
 
@@ -7,8 +5,6 @@ from components.core.gpx_parser import parse_gpx
 from components.core.climb_detector import detect_significant_segments
 from components.core.utils import classify_climb_category
 
-import os
-print("DIR:", os.listdir("components/ui"))
 from components.ui.elevation_chart import get_smoothed_grade, update_plot_elevation_colored_by_slope
 from components.ui.map_display import update_display_route_map
 from components.ui.stats_panel import show_stats
@@ -58,14 +54,20 @@ if uploaded_file:
         if show_slope_colors:
             # display_legend()
             # pass  # Legend is not implemented in this version
-            st.markdown("**Legend:**")
+            pass
 
     with col2:
+        simplified_view = st.checkbox("Simplified slope view (one color per climb/descent)", value=False)
+
         st.subheader("📈 Elevation Profile")
-        update_plot_elevation_colored_by_slope(df,
-                                               climbs_df=climbs_df,
-                                               descents_df=descents_df,
-                                               color_by_slope=show_slope_colors)
+        update_plot_elevation_colored_by_slope(
+            df,
+            climbs_df=climbs_df,
+            descents_df=descents_df,
+            color_by_slope=show_slope_colors,
+            simplified=simplified_view
+        )
+
         st.subheader("📊 Statistics")
         show_stats(stats)
 
