@@ -20,15 +20,27 @@ def get_color(grade):
     elif grade >= -10: return "dodgerblue"
     else: return "blue"
 
-def plot_elevation_colored_by_slope(df):
-    distances_km = df["distance"] / 1000
-    elevations = df["ele"]
-    grades = df["grade"]
+def plot_elevation_colored_by_slope(df1, df2=None):
+    fig, ax = plt.subplots(figsize=(10, 4))
 
-    fig, ax = plt.subplots(figsize=(10, 3))
-    for i in range(1, len(df)):
-        ax.plot(distances_km[i-1:i+1], elevations[i-1:i+1],
-                color=get_color(grades[i]), linewidth=2)
+    for i in range(1, len(df1)):
+        ax.plot(
+            df1["distance"].iloc[i-1:i+1] / 1000,
+            df1["ele"].iloc[i-1:i+1],
+            color=get_color(df1["grade"].iloc[i]),
+            linewidth=2
+        )
+
+    if df2 is not None:
+        ax.plot(
+            df2["distance"] / 1000,
+            df2["ele"],
+            color='black',
+            linestyle='--',
+            linewidth=1.5,
+            label='GPX 2 (elevation)'
+        )
+        ax.legend()
 
     ax.set_xlabel("Distance [km]")
     ax.set_ylabel("Elevation [m]")
