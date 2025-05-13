@@ -8,14 +8,8 @@ st.set_page_config(layout="wide", page_title="GPX Analyzer 📍")
 
 st.title("GPX Route Analyzer 📍")
 
-<<<<<<< HEAD
 file1 = st.file_uploader("Upload first GPX file", type=["gpx"], key="file1")
 file2 = st.file_uploader("Upload second GPX file (optional)", type=["gpx"], key="file2")
-=======
-uploaded_file = st.file_uploader("Upload a GPX file", type=["gpx"])
-uploaded_file2 = st.file_uploader("Upload second GPX (optional)", type=["gpx"])
-
->>>>>>> 9426b76c9a3fe3cb18c237d688e70cea09f9c131
 
 if file1:
     gpx_data1 = file1.read().decode("utf-8")
@@ -37,8 +31,4 @@ if file1:
     display_route_map(df1, df2)
 
 else:
-<<<<<<< HEAD
     st.info("Please upload at least one .gpx file to begin.")
-=======
-    st.info("Please upload a .gpx file to begin.")
->>>>>>> 9426b76c9a3fe3cb18c237d688e70cea09f9c131
