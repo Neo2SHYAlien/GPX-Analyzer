@@ -7,7 +7,7 @@ from components.stats_panel import show_stats
 from components.elevation_chart import get_smoothed_grade, update_plot_elevation_colored_by_slope
 from components.map_display import update_display_route_map
 from components.climb_detector import detect_significant_segments
-from components.utils import categorize_climb
+from components.utils import classify_climb_category
 from components.segment_details import show_segment_summary_and_details
 
 
@@ -33,8 +33,8 @@ if uploaded_file:
     descents_df = detect_significant_segments(df, kind="descent")
 
     # Compute extra features
-    climbs_df["category"] = climbs_df.apply(lambda row: categorize_climb(row["length_m"], row["avg_slope"]), axis=1)
-    descents_df["category"] = descents_df.apply(lambda row: categorize_climb(row["length_m"], abs(row["avg_slope"])), axis=1)
+    climbs_df["category"] = climbs_df.apply(lambda row: classify_climb_category(row["length_m"], row["avg_slope"]), axis=1)
+    descents_df["category"] = descents_df.apply(lambda row: classify_climb_category(row["length_m"], abs(row["avg_slope"])), axis=1)
 
     climbs_df["max_slope"] = climbs_df.apply(lambda row: df["plot_grade"].iloc[row["start_idx"]:row["end_idx"]+1].max(), axis=1)
     climbs_df["min_slope"] = climbs_df.apply(lambda row: df["plot_grade"].iloc[row["start_idx"]:row["end_idx"]+1].min(), axis=1)
