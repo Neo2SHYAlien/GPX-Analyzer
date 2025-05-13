@@ -32,18 +32,17 @@ def plot_elevation_colored_by_slope(df1, df2=None):
         )
 
     if df2 is not None:
-        ax.plot(
-            df2["distance"] / 1000,
-            df2["ele"],
-            color=get_color(df2["grade"].iloc[i]),
-            linestyle='--',
-            linewidth=2
-        )
-        ax.legend()
+        for j in range(1, len(df2)):
+            ax.plot(
+                df2["distance"].iloc[j-1:j+1] / 1000,
+                df2["ele"].iloc[j-1:j+1],
+                color=get_color(df2["grade"].iloc[j]),
+                linestyle='--',
+                linewidth=2
+            )
 
     ax.set_xlabel("Distance [km]")
     ax.set_ylabel("Elevation [m]")
     ax.set_title("Elevation Profile Colored by Grade")
     ax.grid(True)
-
     st.pyplot(fig)
