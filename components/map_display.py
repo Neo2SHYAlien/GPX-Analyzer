@@ -4,19 +4,30 @@ from components.elevation_chart import get_smoothed_grade
 
 def get_color(grade):
     if grade >= 18:
-        return "#8B0000"  # Deep Red
+        return "#7f0000"  # dark red
+    elif grade >= 15:
+        return "#b22222"  # firebrick
+    elif grade >= 12:
+        return "#ff4500"  # orange red
     elif grade >= 10:
-        return "#FF8C00"  # Orange
+        return "#ff8c00"  # dark orange
+    elif grade >= 6:
+        return "#ffd700"  # gold
     elif grade >= 2:
-        return "#FFFF00"  # Yellow
+        return "#ffff00"  # yellow
     elif grade >= 0:
-        return "#ADFF2F"  # Light Green
+        return "#adff2f"  # green yellow
     elif grade >= -2:
-        return "#ADD8E6"  # Light Blue
+        return "#90ee90"  # light green
+    elif grade >= -6:
+        return "#87ceeb"  # sky blue
     elif grade >= -10:
-        return "#0000FF"  # Blue
+        return "#0000ff"  # blue
+    elif grade >= -15:
+        return "#0000cd"  # medium blue
     else:
-        return "#00008B"  # Dark Blue
+        return "#00008b"  # dark blue
+
 
 def display_route_map(df, tile_style="OpenStreetMap", climbs_df=None):
     df["plot_grade"] = get_smoothed_grade(df)
