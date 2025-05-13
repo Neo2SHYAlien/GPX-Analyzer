@@ -9,6 +9,8 @@ st.set_page_config(layout="wide", page_title="GPX Analyzer 📍")
 st.title("GPX Route Analyzer 📍")
 
 uploaded_file = st.file_uploader("Upload a GPX file", type=["gpx"])
+uploaded_file2 = st.file_uploader("Upload second GPX (optional)", type=["gpx"])
+
 
 if uploaded_file:
     gpx_data = uploaded_file.read().decode("utf-8")
