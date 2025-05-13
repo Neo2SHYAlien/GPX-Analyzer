@@ -42,6 +42,8 @@ def parse_gpx(gpx_content):
         "max_elevation": df["ele"].max(),
         "average_grade": df["grade"].mean(),
         "max_grade": df["grade"].max(),
+        "min_grade": df["grade"].min(),
+        "average_speed": (df["distance"].iloc[-1] / 1000) / (df["duration_sec"].sum() / 3600) if df["duration_sec"].sum() > 0 else 0,
         "moving_time_min": df["duration_sec"][df["duration_sec"] < 300].sum() / 60,
         "total_time_min": df["duration_sec"].sum() / 60
     }
