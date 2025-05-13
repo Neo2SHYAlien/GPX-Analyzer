@@ -2,25 +2,28 @@ import folium
 from streamlit_folium import st_folium
 from components.elevation_chart import get_smoothed_grade
 
-def get_color(grade):
-    if grade >= 18:
-        return "#8B0000"  # Deep Red
-    elif grade >= 10:
-        return "#FF8C00"  # Orange
-    elif grade >= 2:
-        return "#FFFF00"  # Yellow
-    elif grade >= 0:
-        return "#ADFF2F"  # Light Green
-    elif grade >= -2:
-        return "#ADD8E6"  # Light Blue
-    elif grade >= -10:
-        return "#0000FF"  # Blue
-    else:
-        return "#00008B"  # Dark Blue
+def update_display_route_map(df, tile_style="OpenStreetMap", climbs_df=None, descents_df=None):
+    import folium
+    from streamlit_folium import st_folium
+    from components.elevation_chart import get_smoothed_grade
 
-def display_route_map(df, tile_style="OpenStreetMap", climbs_df=None):
+    def get_color(grade):
+        if grade >= 18:
+            return "#8B0000"
+        elif grade >= 10:
+            return "#FF8C00"
+        elif grade >= 2:
+            return "#FFFF00"
+        elif grade >= 0:
+            return "#ADFF2F"
+        elif grade >= -2:
+            return "#ADD8E6"
+        elif grade >= -10:
+            return "#0000FF"
+        else:
+            return "#00008B"
+
     df["plot_grade"] = get_smoothed_grade(df)
-
     center = [df["lat"].iloc[len(df)//2], df["lon"].iloc[len(df)//2]]
     m = folium.Map(location=center, zoom_start=13, control_scale=True, tiles=None)
 
@@ -39,7 +42,7 @@ def display_route_map(df, tile_style="OpenStreetMap", climbs_df=None):
         color = get_color(grades[i])
         folium.PolyLine(segment, color=color, weight=4, opacity=1).add_to(m)
 
-    # Add climb number markers
+    # Add climb markers
     if climbs_df is not None and not climbs_df.empty:
         for idx, row in climbs_df.iterrows():
             mid_idx = (row["start_idx"] + row["end_idx"]) // 2
@@ -50,8 +53,21 @@ def display_route_map(df, tile_style="OpenStreetMap", climbs_df=None):
                 icon=folium.DivIcon(html=f"<div style='font-size: 12px; color: red;'>{idx+1}</div>")
             ).add_to(m)
 
+    # Add descent markers
+    if descents_df is not None and not descents_df.empty:
+        for idx, row in descents_df.iterrows():
+            mid_idx = (row["start_idx"] + row["end_idx"]) // 2
+            lat, lon = df.loc[mid_idx, ["lat", "lon"]]
+            folium.Marker(
+                location=[lat, lon],
+                popup=f"Descent {idx+1}: {int(row['elev_loss'])}m ↓",
+                icon=folium.DivIcon(html=f"<div style='font-size: 12px; color: blue;'>{idx+1}</div>")
+            ).add_to(m)
+
     folium.LayerControl().add_to(m)
     st_folium(m, width=800, height=500)
+    return m
+
 
 def display_legend():
     from streamlit.components.v1 import html
