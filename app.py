@@ -23,7 +23,7 @@ if uploaded_file:
     gpx_data = uploaded_file.read().decode("utf-8")
     df, stats = parse_gpx(gpx_data)
 
-    # 🟢 Apply smoothing before detection or plotting
+
     df["plot_grade"] = get_smoothed_grade(df)
 
     climbs_df = detect_climbs(df)
