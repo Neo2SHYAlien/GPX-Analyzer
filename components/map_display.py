@@ -26,7 +26,7 @@ def display_route_map(df1, df2=None):
     folium.TileLayer(
         tiles="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         attr='OpenStreetMap',
-        opacity=0.5,
+        opacity=0.25,
         name="Base Map"
     ).add_to(m)
 
@@ -35,10 +35,11 @@ def display_route_map(df1, df2=None):
     for i in range(1, len(latlngs1)):
         segment = [latlngs1[i-1], latlngs1[i]]
         color = get_color(grades1[i])
-        folium.PolyLine(segment, color=color, weight=4).add_to(m)
+        folium.PolyLine(segment, color=color, weight=4, opacity=1).add_to(m)
 
     if df2 is not None:
         latlngs2 = df2[["lat", "lon"]].values.tolist()
-        folium.PolyLine(latlngs2, color="black", weight=3, opacity=0.7, dash_array="5,5").add_to(m)
+        color = get_color(grades1[i])
+        folium.PolyLine(latlngs2, color=color, weight=3, opacity=1).add_to(m)
 
     st_folium(m, width=800, height=500)
