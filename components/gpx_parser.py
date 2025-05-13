@@ -2,13 +2,9 @@ import gpxpy
 import pandas as pd
 from geopy.distance import geodesic
 
-def reduce_points(df, max_points_per_km=300):
-    total_km = df["distance"].iloc[-1] / 1000
-    max_points = total_km * max_points_per_km
+def reduce_points(df, max_points=1000):
     if len(df) <= max_points:
         return df  # no need to reduce
-
-    # Reduce to max_points by keeping every Nth point
     step = int(len(df) / max_points)
     reduced_df = df.iloc[::step].reset_index(drop=True)
     return reduced_df
@@ -19,6 +15,7 @@ def parse_gpx(gpx_content):
 
     for track in gpx.tracks:
         for segment in track.segments:
+            
             for point in segment.points:
                 data.append({
                     "lat": point.latitude,
@@ -28,6 +25,9 @@ def parse_gpx(gpx_content):
                 })
 
     df = pd.DataFrame(data)
+
+    df = reduce_points(df, max_points=1000)
+
     df["distance"] = 0.0
     df["grade"] = 0.0
     df["duration_sec"] = 0.0
@@ -50,10 +50,6 @@ def parse_gpx(gpx_content):
     point_density_per_km = num_points / (total_distance / 1000) if total_distance > 0 else 0
     point_density_per_100m = num_points / (total_distance / 100) if total_distance > 0 else 0
 
-    # Auto-reduce points if too dense
-    df = reduce_points(df, max_points_per_km=300)
-
-    # Recalculate stats after reduction
     stats = {
         "total_distance_km": total_distance / 1000,
         "elevation_gain": df[df["grade"] > 0]["ele"].diff().clip(lower=0).sum(),
@@ -67,7 +63,7 @@ def parse_gpx(gpx_content):
         "num_points": len(df),
         "point_density_km": point_density_per_km,
         "point_density_100m": point_density_per_100m,
-        "precision_score": min(100.0, (point_density_per_km / 100) * 100)  # calibrated better
+        "precision_score": min(100.0, (point_density_per_km / 100) * 100)
     }
 
     return df, stats
