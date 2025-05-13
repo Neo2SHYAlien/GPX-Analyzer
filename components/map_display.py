@@ -18,8 +18,7 @@ def get_color(grade):
     else:
         return "#00008B"  # Dark Blue
 
-def display_route_map(df, tile_style="OpenStreetMap"):
-    # Smooth the grade before plotting
+def display_route_map(df, tile_style="OpenStreetMap", climbs_df=None):
     df["plot_grade"] = get_smoothed_grade(df)
 
     center = [df["lat"].iloc[len(df)//2], df["lon"].iloc[len(df)//2]]
@@ -39,6 +38,17 @@ def display_route_map(df, tile_style="OpenStreetMap"):
         segment = [latlngs[i-1], latlngs[i]]
         color = get_color(grades[i])
         folium.PolyLine(segment, color=color, weight=4, opacity=1).add_to(m)
+
+    # Add climb number markers
+    if climbs_df is not None and not climbs_df.empty:
+        for idx, row in climbs_df.iterrows():
+            mid_idx = (row["start_idx"] + row["end_idx"]) // 2
+            lat, lon = df.loc[mid_idx, ["lat", "lon"]]
+            folium.Marker(
+                location=[lat, lon],
+                popup=f"Climb {idx+1}: {int(row['elev_gain'])}m ↑",
+                icon=folium.DivIcon(html=f"<div style='font-size: 12px; color: red;'>{idx+1}</div>")
+            ).add_to(m)
 
     folium.LayerControl().add_to(m)
     st_folium(m, width=800, height=500)
