@@ -35,10 +35,9 @@ def plot_elevation_colored_by_slope(df1, df2=None):
         ax.plot(
             df2["distance"] / 1000,
             df2["ele"],
-            color='black',
+            color=get_color(df2["grade"].iloc[i]),
             linestyle='--',
-            linewidth=1.5,
-            label='GPX 2 (elevation)'
+            linewidth=2
         )
         ax.legend()
 
