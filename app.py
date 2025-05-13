@@ -10,7 +10,7 @@ from components.core.utils import classify_climb_category
 import os
 print("DIR:", os.listdir("components/ui"))
 from components.ui.elevation_chart import get_smoothed_grade, update_plot_elevation_colored_by_slope
-from components.ui.map_display import update_display_route_map
+from components.ui.map_display import update_display_route_map, display_legend
 from components.ui.stats_panel import show_stats
 from components.ui.segment_details import show_segment_summary_and_details
 
@@ -56,7 +56,7 @@ if uploaded_file:
                                  descents_df=descents_df,
                                  color_by_slope=show_slope_colors)
         if show_slope_colors:
-            # display_legend()
+            display_legend()
             pass  # Legend is not implemented in this version
             st.markdown("**Legend:**")
 

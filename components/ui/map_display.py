@@ -46,3 +46,19 @@ def update_display_route_map(df, tile_style="OpenStreetMap", climbs_df=None, des
     folium.LayerControl().add_to(m)
     st_folium(m, width=800, height=500, returned_objects=[], use_container_width=True, key="main_map", return_last_map=False)
     
+from streamlit.components.v1 import html
+
+def display_legend():
+    legend_html = """
+    <div style="padding:10px; background:white; border-radius:8px; width:fit-content; font-size:14px;">
+        <b>Grade Legend (Slope %)</b><br>
+        <span style="background:#8B0000; width:20px; display:inline-block;">&nbsp;</span> ≥ 18%<br>
+        <span style="background:#FF8C00; width:20px; display:inline-block;">&nbsp;</span> 10–17%<br>
+        <span style="background:#FFFF00; width:20px; display:inline-block;">&nbsp;</span> 2–9%<br>
+        <span style="background:#ADFF2F; width:20px; display:inline-block;">&nbsp;</span> 0–1%<br>
+        <span style="background:#ADD8E6; width:20px; display:inline-block;">&nbsp;</span> -1 to -2%<br>
+        <span style="background:#0000FF; width:20px; display:inline-block;">&nbsp;</span> -3 to -10%<br>
+        <span style="background:#00008B; width:20px; display:inline-block;">&nbsp;</span> < -10%<br>
+    </div>
+    """
+    html(legend_html, height=200)
