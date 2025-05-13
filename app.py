@@ -12,6 +12,16 @@ with st.sidebar:
     file1 = st.file_uploader("First GPX", type=["gpx"], key="file1")
     file2 = st.file_uploader("Second GPX (optional)", type=["gpx"], key="file2")
 
+    tile_style = st.selectbox("Map Style", [
+        "OpenStreetMap",
+        "Stamen Terrain",
+        "Stamen Toner",
+        "Stamen Watercolor",
+        "CartoDB positron",
+        "CartoDB dark_matter"
+    ])
+
+
 # Main app layout
 if file1:
     gpx_data1 = file1.read().decode("utf-8")
@@ -27,7 +37,8 @@ if file1:
 
     with col1:
         st.subheader("🗺️ Route Map")
-        display_route_map(df1, df2)
+        display_route_map(df1, df2, tile_style)
+
 
     with col2:
         st.subheader("📈 Elevation Profile")

@@ -18,17 +18,16 @@ def get_color(grade):
         return "#00008B"  # Dark Blue
 
 
-def display_route_map(df1, df2=None):
-    # Determine the center of the map
+def display_route_map(df1, df2=None, tile_style="OpenStreetMap"):
     center = [df1["lat"].iloc[len(df1)//2], df1["lon"].iloc[len(df1)//2]]
-    m = folium.Map(location=center, zoom_start=13, control_scale=True)
+    m = folium.Map(location=center, zoom_start=13, control_scale=True, tiles=None)
 
-    # Add base tile layer with reduced opacity
+    # Add user-selected tile layer with reduced opacity
     folium.TileLayer(
-        tiles="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        attr='OpenStreetMap',
+        tiles=tile_style,
+        name=tile_style,
         opacity=0.3,
-        name="Base Map"
+        control=True
     ).add_to(m)
 
     # Plot the first GPX track with grade-based coloring
