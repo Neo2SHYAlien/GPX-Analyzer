@@ -29,3 +29,6 @@ def update_plot_elevation_colored_by_slope(df, climbs_df=None, descents_df=None)
     ax.set_title("Elevation Profile (Smoothed Slope)")
     ax.grid(True)
     st.pyplot(fig)
+
+def get_smoothed_grade(df):
+    return apply_slope_smoothing(df)["plot_grade"]
