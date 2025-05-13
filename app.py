@@ -1,3 +1,5 @@
+# FILE: app.py
+
 import streamlit as st
 from components.gpx_parser import parse_gpx
 from components.stats_panel import show_stats
@@ -15,6 +17,7 @@ with st.sidebar:
         "CartoDB positron",
         "CartoDB dark_matter"
     ])
+    show_slope_colors = st.checkbox("Color route by slope", value=True)
 
 if uploaded_file:
     gpx_data = uploaded_file.read().decode("utf-8")
@@ -29,7 +32,7 @@ if uploaded_file:
 
     with col1:
         st.subheader("🗽️ Route Map")
-        update_display_route_map(df, tile_style=tile_style, climbs_df=climbs_df, descents_df=descents_df)
+        update_display_route_map(df, tile_style=tile_style, climbs_df=climbs_df, descents_df=descents_df, color_by_slope=show_slope_colors)
         display_legend()
 
     with col2:

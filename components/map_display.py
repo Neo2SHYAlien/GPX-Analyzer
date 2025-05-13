@@ -1,9 +1,9 @@
 import folium
 from streamlit_folium import st_folium
 from components.elevation_chart import get_smoothed_grade
-from components.utils import get_color
+from components.utils.slope_utils import get_color
 
-def update_display_route_map(df, tile_style="OpenStreetMap", climbs_df=None, descents_df=None):
+def update_display_route_map(df, tile_style="OpenStreetMap", climbs_df=None, descents_df=None, color_by_slope=True):
     df["plot_grade"] = get_smoothed_grade(df)
     center = [df["lat"].iloc[len(df)//2], df["lon"].iloc[len(df)//2]]
     m = folium.Map(location=center, zoom_start=13, control_scale=True, tiles=None)
@@ -20,7 +20,7 @@ def update_display_route_map(df, tile_style="OpenStreetMap", climbs_df=None, des
 
     for i in range(1, len(latlngs)):
         segment = [latlngs[i-1], latlngs[i]]
-        color = get_color(grades[i])
+        color = get_color(grades[i]) if color_by_slope else "#999999"
         folium.PolyLine(segment, color=color, weight=4, opacity=1).add_to(m)
 
     if climbs_df is not None and not climbs_df.empty:
@@ -45,6 +45,7 @@ def update_display_route_map(df, tile_style="OpenStreetMap", climbs_df=None, des
 
     folium.LayerControl().add_to(m)
     st_folium(m, width=800, height=500)
+
 
 def display_legend():
     from streamlit.components.v1 import html

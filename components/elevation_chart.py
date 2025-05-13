@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import streamlit as st
-from components.utils import apply_slope_smoothing, get_color
+from components.utils.slope_utils import apply_slope_smoothing, get_color
 
 def get_smoothed_grade(df):
     return apply_slope_smoothing(df)["plot_grade"]
 
-def update_plot_elevation_colored_by_slope(df, climbs_df=None, descents_df=None):
+def update_plot_elevation_colored_by_slope(df, climbs_df=None, descents_df=None, color_by_slope=True):
     st.markdown(f"*Slope smoothed over ~300 meters*")
     df = apply_slope_smoothing(df)
 
@@ -14,7 +14,8 @@ def update_plot_elevation_colored_by_slope(df, climbs_df=None, descents_df=None)
     for i in range(1, len(df)):
         x = df["distance"].iloc[i-1:i+1] / 1000
         y = df["ele"].iloc[i-1:i+1]
-        ax.fill_between(x, 0, y, color=get_color(df["plot_grade"].iloc[i]), alpha=0.8)
+        color = get_color(df["plot_grade"].iloc[i]) if color_by_slope else "#999999"
+        ax.fill_between(x, 0, y, color=color, alpha=0.8)
 
     if climbs_df is not None and not climbs_df.empty:
         for _, row in climbs_df.iterrows():
@@ -28,6 +29,6 @@ def update_plot_elevation_colored_by_slope(df, climbs_df=None, descents_df=None)
 
     ax.set_xlabel("Distance [km]")
     ax.set_ylabel("Elevation [m]")
-    ax.set_title("Elevation Profile (Smoothed Slope)")
+    ax.set_title("Elevation Profile" + (" (Smoothed Slope)" if color_by_slope else ""))
     ax.grid(True)
     st.pyplot(fig)
