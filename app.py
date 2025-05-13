@@ -2,48 +2,39 @@ import streamlit as st
 from components.gpx_parser import parse_gpx
 from components.elevation_chart import plot_elevation_colored_by_slope
 from components.stats_panel import show_stats
-from components.map_display import display_route_map
-from components.map_display import display_legend
+from components.map_display import display_route_map, display_legend
 
 st.set_page_config(layout="wide", page_title="GPX Analyzer 📍")
 
-# Uploaders in the sidebar
+# Upload and map style in sidebar
 with st.sidebar:
-    st.title("Upload GPX File(s)")
-    file1 = st.file_uploader("First GPX", type=["gpx"], key="file1")
-    file2 = st.file_uploader("Second GPX (optional)", type=["gpx"], key="file2")
-
+    st.title("Upload GPX File")
+    uploaded_file = st.file_uploader("Choose a GPX file", type=["gpx"])
     tile_style = st.selectbox("Map Style", [
         "OpenStreetMap",
+        "Stamen Terrain",
+        "Stamen Toner",
+        "Stamen Watercolor",
         "CartoDB positron",
         "CartoDB dark_matter"
     ])
 
-
-# Main app layout
-if file1:
-    gpx_data1 = file1.read().decode("utf-8")
-    df1, stats1 = parse_gpx(gpx_data1)
-
-    if file2:
-        gpx_data2 = file2.read().decode("utf-8")
-        df2, stats2 = parse_gpx(gpx_data2)
-    else:
-        df2, stats2 = None, None
+if uploaded_file:
+    gpx_data = uploaded_file.read().decode("utf-8")
+    df, stats = parse_gpx(gpx_data)
 
     col1, col2 = st.columns(2)
 
     with col1:
         st.subheader("🗺️ Route Map")
-        display_route_map(df1, df2, tile_style)
+        display_route_map(df, tile_style=tile_style)
         display_legend()
-
 
     with col2:
         st.subheader("📈 Elevation Profile")
-        plot_elevation_colored_by_slope(df1, df2)
+        plot_elevation_colored_by_slope(df)
         st.subheader("📊 Statistics")
-        show_stats(stats1, stats2)
+        show_stats(stats)
 
 else:
-    st.info("Please upload at least one GPX file to begin.")
+    st.info("Please upload a GPX file to begin.")
