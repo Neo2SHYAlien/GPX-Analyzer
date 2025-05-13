@@ -48,11 +48,26 @@ if uploaded_file:
     else:
         st.dataframe(climbs_df[["start_km", "end_km", "elev_gain", "length_m", "avg_slope"]], use_container_width=True)
 
-    st.subheader("⛰️ Detected Descents")
-    if descents_df.empty:
-        st.info("No descents detected with current thresholds.")
-    else:
-        st.dataframe(descents_df[["start_km", "end_km", "elev_loss", "length_m", "avg_slope"]], use_container_width=True)
+    st.subheader("⛰️ Climbs and Descents")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("**Climbs**")
+        if climbs_df.empty:
+            st.info("No climbs detected.")
+        else:
+            st.dataframe(climbs_df[["start_km", "end_km", "elev_gain", "length_m", "avg_slope"]],
+                        use_container_width=True)
+
+    with col2:
+        st.markdown("**Descents**")
+        if descents_df.empty:
+            st.info("No descents detected.")
+        else:
+            st.dataframe(descents_df[["start_km", "end_km", "elev_loss", "length_m", "avg_slope"]],
+                        use_container_width=True)
+
 
 else:
     st.info("Please upload a GPX file to begin.")
