@@ -25,7 +25,7 @@ def plot_elevation_colored_by_slope(df):
     meters_per_point = total_distance_m / len(df)
     target_smoothing_meters = 200
 
-    window = max(3, int(target_smoothing_meters / meters_per_point))
+    window = max(10, int(target_smoothing_meters / meters_per_point))
 
     df["plot_grade"] = df["grade"].rolling(window=window, center=True).mean().fillna(method="bfill").fillna(method="ffill")
 
