@@ -1,6 +1,6 @@
 import folium
 from streamlit_folium import st_folium
-import streamlit.components.v1 as components
+from components.elevation_chart import get_smoothed_grade
 
 def get_color(grade):
     if grade >= 18:
@@ -18,42 +18,33 @@ def get_color(grade):
     else:
         return "#00008B"  # Dark Blue
 
+def display_route_map(df, tile_style="OpenStreetMap"):
+    # Smooth the grade before plotting
+    df["plot_grade"] = get_smoothed_grade(df)
 
-def display_route_map(df1, df2=None, tile_style="CartoDB positron"):
-    center = [df1["lat"].iloc[len(df1)//2], df1["lon"].iloc[len(df1)//2]]
+    center = [df["lat"].iloc[len(df)//2], df["lon"].iloc[len(df)//2]]
     m = folium.Map(location=center, zoom_start=13, control_scale=True, tiles=None)
 
-    # Add user-selected tile layer with reduced opacity
     folium.TileLayer(
         tiles=tile_style,
         name=tile_style,
-        opacity=0.5,
+        opacity=0.3,
         control=True
     ).add_to(m)
 
-    # Plot the first GPX track with grade-based coloring
-    latlngs1 = df1[["lat", "lon"]].values.tolist()
-    grades1 = df1["grade"].tolist()
-    for i in range(1, len(latlngs1)):
-        segment = [latlngs1[i-1], latlngs1[i]]
-        color = get_color(grades1[i])
-        folium.PolyLine(segment, color=color, weight=5, opacity=1).add_to(m)
+    latlngs = df[["lat", "lon"]].values.tolist()
+    grades = df["plot_grade"].tolist()
 
-    # If a second GPX track is provided, plot it with a distinct style
-    if df2 is not None:
-        latlngs2 = df2[["lat", "lon"]].values.tolist()
-        grades2 = df2["grade"].tolist()
-        for i in range(1, len(latlngs2)):
-            segment = [latlngs2[i-1], latlngs2[i]]
-            color = get_color(grades2[i])
-            folium.PolyLine(segment, color=color, weight=3, opacity=1, dash_array='5,10').add_to(m)
+    for i in range(1, len(latlngs)):
+        segment = [latlngs[i-1], latlngs[i]]
+        color = get_color(grades[i])
+        folium.PolyLine(segment, color=color, weight=4, opacity=1).add_to(m)
 
-    # Display the map in Streamlit
+    folium.LayerControl().add_to(m)
     st_folium(m, width=800, height=500)
 
-
-
 def display_legend():
+    from streamlit.components.v1 import html
     legend_html = """
     <div style="padding:10px; background:white; border-radius:8px; width:fit-content; font-size:14px;">
         <b>Grade Legend (Slope %)</b><br>
@@ -66,4 +57,4 @@ def display_legend():
         <span style="background:#00008B; width:20px; display:inline-block;">&nbsp;</span> < -10%<br>
     </div>
     """
-    components.html(legend_html, height=200)
+    html(legend_html, height=200)
