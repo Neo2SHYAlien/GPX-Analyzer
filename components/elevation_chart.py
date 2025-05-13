@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
+import streamlit as st
+from components.elevation_chart import apply_slope_smoothing, get_color
 
 def update_plot_elevation_colored_by_slope(df, climbs_df=None, descents_df=None):
-    import streamlit as st
-    from components.elevation_chart import apply_slope_smoothing, get_color
+    
 
     st.markdown(f"*Slope smoothed over ~300 meters*")
     df = apply_slope_smoothing(df)
