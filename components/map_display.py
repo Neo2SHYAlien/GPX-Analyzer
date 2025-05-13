@@ -2,22 +2,21 @@ import folium
 from streamlit_folium import st_folium
 
 def get_color(grade):
-    if grade >= 18: return "black"
-    elif grade >= 16: return "blue"
-    elif grade >= 14: return "darkgreen"
-    elif grade >= 12: return "magenta"
-    elif grade >= 10: return "red"
-    elif grade >= 8: return "orangered"
-    elif grade >= 6: return "deepskyblue"
-    elif grade >= 4: return "springgreen"
-    elif grade >= 2: return "yellow"
-    elif grade >= 0: return "gray"
-    elif grade >= -2: return "lightgreen"
-    elif grade >= -4: return "mediumseagreen"
-    elif grade >= -6: return "cyan"
-    elif grade >= -8: return "cornflowerblue"
-    elif grade >= -10: return "dodgerblue"
-    else: return "blue"
+    if grade >= 18:
+        return "#8B0000"  # Deep Red
+    elif grade >= 10:
+        return "#FF8C00"  # Orange
+    elif grade >= 2:
+        return "#FFFF00"  # Yellow
+    elif grade >= 0:
+        return "#ADFF2F"  # Light Green
+    elif grade >= -2:
+        return "#ADD8E6"  # Light Blue
+    elif grade >= -10:
+        return "#0000FF"  # Blue
+    else:
+        return "#00008B"  # Dark Blue
+
 
 def display_route_map(df1, df2=None):
     center = [df1["lat"].iloc[len(df1)//2], df1["lon"].iloc[len(df1)//2]]
@@ -26,7 +25,7 @@ def display_route_map(df1, df2=None):
     folium.TileLayer(
         tiles="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         attr='OpenStreetMap',
-        opacity=0.25,
+        opacity=0.1,
         name="Base Map"
     ).add_to(m)
 
