@@ -27,7 +27,12 @@ def parse_gpx(gpx_content):
         df.loc[i, "distance"] = df.loc[i - 1, "distance"] + d
         elev_diff = df.loc[i, "ele"] - df.loc[i - 1, "ele"]
         df.loc[i, "grade"] = (elev_diff / d) * 100 if d > 0 else 0.0
-        df.loc[i, "duration_sec"] = (df.loc[i, "time"] - df.loc[i - 1, "time"]).total_seconds()
+
+        # Safe timestamp difference
+        if pd.notnull(df.loc[i, "time"]) and pd.notnull(df.loc[i - 1, "time"]):
+            df.loc[i, "duration_sec"] = (df.loc[i, "time"] - df.loc[i - 1, "time"]).total_seconds()
+        else:
+            df.loc[i, "duration_sec"] = 0.0
 
     stats = {
         "total_distance_km": df["distance"].iloc[-1] / 1000,
