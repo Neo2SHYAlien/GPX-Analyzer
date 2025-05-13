@@ -6,11 +6,13 @@ from components.map_display import display_route_map
 
 st.set_page_config(layout="wide", page_title="GPX Analyzer 📍")
 
-st.title("GPX Route Analyzer 📍")
+# Uploaders in the sidebar
+with st.sidebar:
+    st.title("Upload GPX File(s)")
+    file1 = st.file_uploader("First GPX", type=["gpx"], key="file1")
+    file2 = st.file_uploader("Second GPX (optional)", type=["gpx"], key="file2")
 
-file1 = st.file_uploader("Upload first GPX file", type=["gpx"], key="file1")
-file2 = st.file_uploader("Upload second GPX file (optional)", type=["gpx"], key="file2")
-
+# Main app layout
 if file1:
     gpx_data1 = file1.read().decode("utf-8")
     df1, stats1 = parse_gpx(gpx_data1)
@@ -21,14 +23,17 @@ if file1:
     else:
         df2, stats2 = None, None
 
-    st.subheader("📊 Statistics")
-    show_stats(stats1, stats2)
+    col1, col2 = st.columns(2)
 
-    st.subheader("📈 Elevation Profile (colored by slope)")
-    plot_elevation_colored_by_slope(df1, df2)
+    with col1:
+        st.subheader("🗺️ Route Map")
+        display_route_map(df1, df2)
 
-    st.subheader("🗺️ Route Map (colored by slope)")
-    display_route_map(df1, df2)
+    with col2:
+        st.subheader("📈 Elevation Profile")
+        plot_elevation_colored_by_slope(df1, df2)
+        st.subheader("📊 Statistics")
+        show_stats(stats1, stats2)
 
 else:
-    st.info("Please upload at least one .gpx file to begin.")
+    st.info("Please upload at least one GPX file to begin.")
