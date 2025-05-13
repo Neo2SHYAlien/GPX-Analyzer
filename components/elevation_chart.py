@@ -21,11 +21,14 @@ def get_color(grade):
 def plot_elevation_colored_by_slope(df):
     detailed = st.checkbox("Check detailed slope (unsmoothed)", value=False)
 
-    total_distance_km = df["distance"].iloc[-1] / 1000
-    adaptive_window = max(3, int(len(df) / (total_distance_km * 5)))
+    total_distance_m = df["distance"].iloc[-1]
+    meters_per_point = total_distance_m / len(df)
+    target_smoothing_meters = 200
 
-    # Always compute smoothed slope, optionally use raw
-    df["plot_grade"] = df["grade"] if detailed else df["grade"].rolling(window=adaptive_window, center=True).mean().fillna(method="bfill").fillna(method="ffill")
+    window = max(3, int(target_smoothing_meters / meters_per_point))
+
+    df["plot_grade"] = df["grade"].rolling(window=window, center=True).mean().fillna(method="bfill").fillna(method="ffill")
+
 
     fig, ax = plt.subplots(figsize=(10, 4))
 
