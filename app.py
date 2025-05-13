@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from components.gpx_parser import parse_gpx
 from components.stats_panel import show_stats
 from components.elevation_chart import get_smoothed_grade, update_plot_elevation_colored_by_slope
-from components.map_display import display_legend, update_display_route_map
+from components.map_display import update_display_route_map
 from components.climb_detector import detect_significant_segments
 from components.utils import categorize_climb
 from components.segment_details import show_segment_summary_and_details
