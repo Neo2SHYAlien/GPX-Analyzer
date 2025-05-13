@@ -3,19 +3,30 @@ import matplotlib.pyplot as plt
 
 def get_color(grade):
     if grade >= 18:
-        return "#8B0000"
+        return "#7f0000"  # dark red
+    elif grade >= 15:
+        return "#b22222"  # firebrick
+    elif grade >= 12:
+        return "#ff4500"  # orange red
     elif grade >= 10:
-        return "#FF8C00"
+        return "#ff8c00"  # dark orange
+    elif grade >= 6:
+        return "#ffd700"  # gold
     elif grade >= 2:
-        return "#FFFF00"
+        return "#ffff00"  # yellow
     elif grade >= 0:
-        return "#ADFF2F"
+        return "#adff2f"  # green yellow
     elif grade >= -2:
-        return "#ADD8E6"
+        return "#90ee90"  # light green
+    elif grade >= -6:
+        return "#87ceeb"  # sky blue
     elif grade >= -10:
-        return "#0000FF"
+        return "#0000ff"  # blue
+    elif grade >= -15:
+        return "#0000cd"  # medium blue
     else:
-        return "#00008B"
+        return "#00008b"  # dark blue
+
 
 def apply_slope_smoothing(df, target_meters=300):
     meters_per_point = df["distance"].iloc[-1] / len(df)
