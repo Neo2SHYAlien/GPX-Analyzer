@@ -1,11 +1,9 @@
 import streamlit as st
 from components.gpx_parser import parse_gpx
-from components.elevation_chart import get_smoothed_grade
 from components.stats_panel import show_stats
+from components.elevation_chart import get_smoothed_grade, update_plot_elevation_colored_by_slope
 from components.map_display import display_legend, update_display_route_map
-from components.climb_detector import  detect_significant_segments
-from components.elevation_chart import update_plot_elevation_colored_by_slope
-
+from components.climb_detector import detect_significant_segments
 
 st.set_page_config(layout="wide", page_title="GPX Analyzer 📍")
 
@@ -22,7 +20,6 @@ if uploaded_file:
     gpx_data = uploaded_file.read().decode("utf-8")
     df, stats = parse_gpx(gpx_data)
 
-
     df["plot_grade"] = get_smoothed_grade(df)
 
     climbs_df = detect_significant_segments(df, kind="climb")
@@ -31,8 +28,7 @@ if uploaded_file:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("🗺️ Route Map")
-        # display_route_map(df, tile_style=tile_style)
+        st.subheader("🗽️ Route Map")
         update_display_route_map(df, tile_style=tile_style, climbs_df=climbs_df, descents_df=descents_df)
         display_legend()
 
@@ -42,14 +38,7 @@ if uploaded_file:
         st.subheader("📊 Statistics")
         show_stats(stats)
 
-    st.subheader("⛰️ Detected Climbs")
-    if climbs_df.empty:
-        st.info("No climbs detected with current thresholds.")
-    else:
-        st.dataframe(climbs_df[["start_km", "end_km", "elev_gain", "length_m", "avg_slope"]], use_container_width=True)
-
     st.subheader("⛰️ Climbs and Descents")
-
     col1, col2 = st.columns(2)
 
     with col1:
@@ -57,17 +46,14 @@ if uploaded_file:
         if climbs_df.empty:
             st.info("No climbs detected.")
         else:
-            st.dataframe(climbs_df[["start_km", "end_km", "elev_gain", "length_m", "avg_slope"]],
-                        use_container_width=True)
+            st.dataframe(climbs_df[["start_km", "end_km", "elev_gain", "length_m", "avg_slope"]], use_container_width=True)
 
     with col2:
         st.markdown("**Descents**")
         if descents_df.empty:
             st.info("No descents detected.")
         else:
-            st.dataframe(descents_df[["start_km", "end_km", "elev_loss", "length_m", "avg_slope"]],
-                        use_container_width=True)
-
+            st.dataframe(descents_df[["start_km", "end_km", "elev_loss", "length_m", "avg_slope"]], use_container_width=True)
 
 else:
     st.info("Please upload a GPX file to begin.")

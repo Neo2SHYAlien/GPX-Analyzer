@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import streamlit as st
+from components.utils.slope_utils import apply_slope_smoothing, get_color
 
-from components.utils import apply_slope_smoothing, get_color
+def get_smoothed_grade(df):
+    return apply_slope_smoothing(df)["plot_grade"]
+
 def update_plot_elevation_colored_by_slope(df, climbs_df=None, descents_df=None):
-    
-
     st.markdown(f"*Slope smoothed over ~300 meters*")
     df = apply_slope_smoothing(df)
 
@@ -30,6 +31,3 @@ def update_plot_elevation_colored_by_slope(df, climbs_df=None, descents_df=None)
     ax.set_title("Elevation Profile (Smoothed Slope)")
     ax.grid(True)
     st.pyplot(fig)
-
-def get_smoothed_grade(df):
-    return apply_slope_smoothing(df)["plot_grade"]
