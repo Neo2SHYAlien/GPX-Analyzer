@@ -30,5 +30,11 @@ def display_route_map(df):
         segment = [latlngs[i-1], latlngs[i]]
         color = get_color(grades[i])
         folium.PolyLine(segment, color=color, weight=4).add_to(m)
-
+    folium.TileLayer(
+    tiles='CartoDB positron',
+    attr='CartoDB',
+    name='Light',
+    control=True,
+    opacity=0.5  # this helps
+).add_to(m)
     st_folium(m, width=800, height=500)
