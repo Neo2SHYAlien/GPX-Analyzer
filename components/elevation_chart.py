@@ -19,39 +19,28 @@ def get_color(grade):
         return "#00008B"  # Dark Blue
 
 def plot_elevation_colored_by_slope(df1, df2=None):
-    use_smooth = st.checkbox("Use smoothed slope (rolling mean)", value=True)
+    detailed = st.checkbox("Check detailed slope (unsmoothed)", value=False)
 
-    if use_smooth:
-        df1["plot_grade"] = df1["grade"].rolling(window=5, center=True).mean().fillna(method="bfill").fillna(method="ffill")
-        if df2 is not None:
-            df2["plot_grade"] = df2["grade"].rolling(window=5, center=True).mean().fillna(method="bfill").fillna(method="ffill")
-    else:
-        df1["plot_grade"] = df1["grade"]
-        if df2 is not None:
-            df2["plot_grade"] = df2["grade"]
+    # Always compute smoothed slope, optionally use raw
+    df1["plot_grade"] = df1["grade"] if detailed else df1["grade"].rolling(window=5, center=True).mean().fillna(method="bfill").fillna(method="ffill")
+    if df2 is not None:
+        df2["plot_grade"] = df2["grade"] if detailed else df2["grade"].rolling(window=5, center=True).mean().fillna(method="bfill").fillna(method="ffill")
 
     fig, ax = plt.subplots(figsize=(10, 4))
 
     for i in range(1, len(df1)):
-        ax.plot(
-            df1["distance"].iloc[i-1:i+1] / 1000,
-            df1["ele"].iloc[i-1:i+1],
-            color=get_color(df1["plot_grade"].iloc[i]),
-            linewidth=2
-        )
+        x = df1["distance"].iloc[i-1:i+1] / 1000
+        y = df1["ele"].iloc[i-1:i+1]
+        ax.fill_between(x, 0, y, color=get_color(df1["plot_grade"].iloc[i]), alpha=0.8)
 
     if df2 is not None:
         for j in range(1, len(df2)):
-            ax.plot(
-                df2["distance"].iloc[j-1:j+1] / 1000,
-                df2["ele"].iloc[j-1:j+1],
-                color=get_color(df2["plot_grade"].iloc[j]),
-                linestyle='--',
-                linewidth=2
-            )
+            x = df2["distance"].iloc[j-1:j+1] / 1000
+            y = df2["ele"].iloc[j-1:j+1]
+            ax.fill_between(x, 0, y, color=get_color(df2["plot_grade"].iloc[j]), alpha=0.4)
 
     ax.set_xlabel("Distance [km]")
     ax.set_ylabel("Elevation [m]")
-    ax.set_title("Elevation Profile Colored by Grade")
+    ax.set_title("Elevation Profile (Area Colored by Slope)")
     ax.grid(True)
     st.pyplot(fig)

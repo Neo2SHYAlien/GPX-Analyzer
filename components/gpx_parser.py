@@ -15,6 +15,7 @@ def parse_gpx(gpx_content):
                     "ele": point.elevation,
                     "time": point.time
                 })
+
     df = pd.DataFrame(data)
     df["distance"] = 0.0
     df["grade"] = 0.0
@@ -28,24 +29,27 @@ def parse_gpx(gpx_content):
         elev_diff = df.loc[i, "ele"] - df.loc[i - 1, "ele"]
         df.loc[i, "grade"] = (elev_diff / d) * 100 if d > 0 else 0.0
 
-        # Safe timestamp difference
         if pd.notnull(df.loc[i, "time"]) and pd.notnull(df.loc[i - 1, "time"]):
             df.loc[i, "duration_sec"] = (df.loc[i, "time"] - df.loc[i - 1, "time"]).total_seconds()
         else:
             df.loc[i, "duration_sec"] = 0.0
 
+    total_distance = df["distance"].iloc[-1]
+    num_points = len(df)
+    point_density = num_points / total_distance if total_distance > 0 else 0
+
     stats = {
-        "total_distance_km": df["distance"].iloc[-1] / 1000,
+        "total_distance_km": total_distance / 1000,
         "elevation_gain": df[df["grade"] > 0]["ele"].diff().clip(lower=0).sum(),
         "elevation_loss": -df[df["grade"] < 0]["ele"].diff().clip(upper=0).sum(),
         "min_elevation": df["ele"].min(),
         "max_elevation": df["ele"].max(),
         "average_grade": df["grade"].mean(),
         "max_grade": df["grade"].max(),
-        "min_grade": df["grade"].min(),
-        "average_speed": (df["distance"].iloc[-1] / 1000) / (df["duration_sec"].sum() / 3600) if df["duration_sec"].sum() > 0 else 0,
         "moving_time_min": df["duration_sec"][df["duration_sec"] < 300].sum() / 60,
-        "total_time_min": df["duration_sec"].sum() / 60
+        "total_time_min": df["duration_sec"].sum() / 60,
+        "num_points": num_points,
+        "point_density": point_density
     }
 
     return df, stats
