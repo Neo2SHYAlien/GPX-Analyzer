@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import streamlit as st
-from components.utils import apply_slope_smoothing, get_color
+from components.core.utils import apply_slope_smoothing, get_color
 
 def get_smoothed_grade(df):
     return apply_slope_smoothing(df)["plot_grade"]

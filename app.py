@@ -2,13 +2,16 @@
 
 import streamlit as st
 import matplotlib.pyplot as plt
-from components.gpx_parser import parse_gpx
-from components.stats_panel import show_stats
-from components.elevation_chart import get_smoothed_grade, update_plot_elevation_colored_by_slope
-from components.map_display import update_display_route_map
-from components.climb_detector import detect_significant_segments
-from components.utils import classify_climb_category
-from components.segment_details import show_segment_summary_and_details
+
+from components.core.gpx_parser import parse_gpx
+from components.core.climb_detector import detect_significant_segments
+from components.core.utils import classify_climb_category
+
+from components.ui.elevation_chart import get_smoothed_grade, update_plot_elevation_colored_by_slope
+from components.ui.map_display import update_display_route_map, display_legend
+from components.ui.stats_panel import show_stats
+from components.ui.segment_details import show_segment_summary_and_details
+
 
 
 st.set_page_config(layout="wide", page_title="GPX Analyzer 📍")
