@@ -7,6 +7,8 @@ from components.core.gpx_parser import parse_gpx
 from components.core.climb_detector import detect_significant_segments
 from components.core.utils import classify_climb_category
 
+import os
+print("DIR:", os.listdir("components/ui"))
 from components.ui.elevation_chart import get_smoothed_grade, update_plot_elevation_colored_by_slope
 from components.ui.map_display import update_display_route_map
 from components.ui.stats_panel import show_stats
