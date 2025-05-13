@@ -56,7 +56,7 @@ if uploaded_file:
         if show_slope_colors:
             # display_legend()
             pass  # Legend is not implemented in this version
-        st.markdown("**Legend:**")
+            st.markdown("**Legend:**")
 
     with col2:
         st.subheader("📈 Elevation Profile")
