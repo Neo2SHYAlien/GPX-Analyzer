@@ -15,7 +15,6 @@ def parse_gpx(gpx_content):
                     "ele": point.elevation,
                     "time": point.time
                 })
-
     df = pd.DataFrame(data)
     df["distance"] = 0.0
     df["grade"] = 0.0
