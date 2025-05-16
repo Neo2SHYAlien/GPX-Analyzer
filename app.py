@@ -92,8 +92,12 @@ if gpx_data:
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Climbs**")
-        st.dataframe(climbs_df[["start_km", "end_km", "elev_gain", "length_m", "avg_slope", "category"]],
-                     use_container_width=True)
+        if not climbs_df.empty:
+            st.dataframe(climbs_df[["start_km", "end_km", "elev_gain", "length_m", "avg_slope", "category"]],
+                        use_container_width=True)
+        else:
+            st.info("No climbs detected.")
+
     with col2:
         st.markdown("**Descents**")
         st.dataframe(descents_df[["start_km", "end_km", "elev_loss", "length_m", "avg_slope", "category"]],
