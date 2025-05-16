@@ -100,9 +100,12 @@ if gpx_data:
 
     with col2:
         st.markdown("**Descents**")
-        st.dataframe(descents_df[["start_km", "end_km", "elev_loss", "length_m", "avg_slope", "category"]],
-                     use_container_width=True)
-
+        if not descents_df.empty:
+            st.dataframe(descents_df[["start_km", "end_km", "elev_loss", "length_m", "avg_slope", "category"]],
+                        use_container_width=True)
+        else:
+            st.info("No descents detected.")
+    
     t.log("Displayed data tables")
 
     st.subheader("🔎 Segment Details")
