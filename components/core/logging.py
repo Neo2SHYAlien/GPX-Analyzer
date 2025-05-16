@@ -10,7 +10,7 @@ class Timer:
     def log(self, label):
         now = time.perf_counter()
         elapsed = now - self.start
-        message = f"[⏱️] {label}: {elapsed:.3f} s"
+        message = f"[TIME] {label}: {elapsed:.3f} s"
         print(message)
         with open(self.log_file, "a") as f:
             f.write(message + "\n")

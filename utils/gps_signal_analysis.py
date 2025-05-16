@@ -1,5 +1,4 @@
 import pandas as pd
-import gpxpy
 import requests
 import folium
 from folium.plugins import HeatMap
@@ -8,39 +7,19 @@ import branca.colormap as cm
 from streamlit_folium import st_folium
 import streamlit as st
 import altair as alt
+from sklearn.neighbors import BallTree
+import numpy as np
 
 
-def run_gps_signal_analysis(gpx_data, radius=50):
+def run_gps_signal_analysis(df, radius=20):
     st.title("📡 GPS Signal Quality Analyzer")
-
-    # ────── Parse GPX
-    try:
-        gpx = gpxpy.parse(gpx_data)
-        data = []
-        for track in gpx.tracks:
-            for segment in track.segments:
-                for point in segment.points:
-                    if point.time:
-                        data.append({
-                            'lat': point.latitude,
-                            'lon': point.longitude,
-                            'ele': point.elevation,
-                            'time': point.time
-                        })
-        df = pd.DataFrame(data)
-    except Exception as e:
-        st.error(f"Error reading GPX: {e}")
-        return
 
     if df.empty:
         st.warning("No points found in GPX.")
         return
 
-    def reduce_df(df, max_points=500):
-        step = max(1, len(df) // max_points)
-        return df.iloc[::step].reset_index(drop=True)
-
-    df = reduce_df(df)
+    # Reduce number of points (every 2nd point)
+    df = df.iloc[::2].reset_index(drop=True)
     st.markdown(f"🔢 Points after reduction: {len(df)}")
 
     # ────── Bounding Box & Overpass Query
@@ -105,22 +84,44 @@ def run_gps_signal_analysis(gpx_data, radius=50):
         st.warning("No buildings found in the area.")
         return
 
-    # ────── Risk Calculation
-    heatmap_data = []
+    # ────── Risk Calculation (using BallTree)
+    earth_radius_m = 6371000
+    radius_rad = radius / earth_radius_m
+
+    tree = BallTree(np.radians(buildings_df[['lat', 'lon']].values), metric='haversine')
     risk_scores = []
+    heatmap_data = []
+    used_buildings_idx = set()
 
-    for i, row in df.iterrows():
-        lat, lon = row['lat'], row['lon']
-        nearby = buildings_df[buildings_df.apply(
-            lambda b: geodesic((lat, lon), (b['lat'], b['lon'])).meters < radius, axis=1)]
-        sum_height = nearby['height'].fillna(nearby['levels'].fillna(0) * 3).sum()
-        heatmap_data.append([lat, lon, sum_height])
-        risk_scores.append(sum_height)
+    building_heights = buildings_df.apply(
+        lambda row: row['height'] if pd.notnull(row['height']) else (row['levels'] or 0) * 3,
+        axis=1
+    ).fillna(0).values
 
-    df['risk_score'] = pd.Series(risk_scores).rolling(window=5, center=True).mean().fillna(method='bfill').fillna(method='ffill')
+    for _, row in df.iterrows():
+        point_rad = np.radians([[row['lat'], row['lon']]])
+        ind = tree.query_radius(point_rad, r=radius_rad)[0]
+        total_score = 0.0
+        for i in ind:
+            b_lat, b_lon = buildings_df.loc[i, ['lat', 'lon']]
+            d = geodesic((row['lat'], row['lon']), (b_lat, b_lon)).meters
+            h = building_heights[i]
+            if h > 0 and d > 1:
+                total_score += h / d
+                used_buildings_idx.add(i)
+        heatmap_data.append([row['lat'], row['lon'], total_score])
+        risk_scores.append(total_score)
+
+    df['risk_score'] = (
+        pd.Series(risk_scores)
+        .rolling(window=5, center=True)
+        .mean()
+        .bfill()
+        .ffill()
+    )
 
     gps_score = "✅ High"
-    danger_ratio = (df['risk_score'] >= 60).mean()
+    danger_ratio = (df['risk_score'] >= 1.0).mean()
     if danger_ratio > 0.5:
         gps_score = "❌ Low"
     elif danger_ratio > 0.2:
@@ -129,30 +130,38 @@ def run_gps_signal_analysis(gpx_data, radius=50):
     st.markdown(f"### 📡 Estimated GPS Precision: {gps_score}")
 
     # ────── Map
-    center = [df.iloc[0]['lat'], df.iloc[0]['lon']]
-    m = folium.Map(location=center, zoom_start=15)
+    center = [df['lat'].mean(), df['lon'].mean()]
+    m = folium.Map(location=center, zoom_start=13)
 
-    # Route colored by risk
     for i in range(len(df) - 1):
         lat1, lon1 = df.loc[i, ['lat', 'lon']]
         lat2, lon2 = df.loc[i + 1, ['lat', 'lon']]
         avg_risk = (df.loc[i, 'risk_score'] + df.loc[i + 1, 'risk_score']) / 2
-        if avg_risk < 30:
-            color = 'green'
-        elif avg_risk < 60:
-            color = 'orange'
-        else:
-            color = 'red'
+        color = 'green' if avg_risk < 0.5 else 'orange' if avg_risk < 1.0 else 'red'
         folium.PolyLine([(lat1, lon1), (lat2, lon2)], color=color, weight=5, opacity=0.9).add_to(m)
 
-    # Color map for buildings
-    heights = buildings_df['height'].dropna().tolist()
-    min_h, max_h = min(heights or [0]), max(heights or [30])
-    colormap = cm.linear.YlOrRd_09.scale(min_h, max_h)
+    filtered_buildings_df = buildings_df.iloc[list(used_buildings_idx)]
+
+    heights = []
+    for _, b in filtered_buildings_df.iterrows():
+        h = b['height'] if pd.notnull(b['height']) else (b['levels'] or 0) * 3
+        if h > 0:
+            heights.append(h)
+
+    if len(heights) < 2:
+        heights = [10, 100]
+    min_h, max_h = float(min(heights)), float(max(heights))
+    if min_h == max_h:
+        min_h -= 1
+        max_h += 1
+    if min_h > max_h:
+        min_h, max_h = max_h - 1, max_h
+
+    colormap = cm.linear.YlOrRd_09.scale(min_h, max_h).to_step(n=10)
     colormap.caption = 'Building Height (m)'
     colormap.add_to(m)
 
-    for _, b in buildings_df.iterrows():
+    for _, b in filtered_buildings_df.iterrows():
         h = b['height'] if pd.notnull(b['height']) else (b['levels'] or 0) * 3
         color = colormap(h) if h else '#999999'
         folium.CircleMarker(location=[b['lat'], b['lon']], radius=5, color=color,
@@ -163,18 +172,17 @@ def run_gps_signal_analysis(gpx_data, radius=50):
     st.markdown("### 🗺️ Map: Buildings & Risk Zones")
     st_folium(m, width=1000, height=600)
 
-    # ────── Charts
     st.markdown("### 📈 Risk Score by Point")
     st.altair_chart(
         alt.Chart(df.reset_index()).mark_line().encode(
             x=alt.X('index', title='Point Index'),
-            y=alt.Y('risk_score', title='Total Nearby Building Height (smoothed)')
+            y=alt.Y('risk_score', title='Weighted Interference (Σ height / distance)')
         ).properties(height=250, width=800),
         use_container_width=True
     )
 
     st.markdown("### 📊 Histogram of GPS Risk Levels")
-    df['risk_level'] = pd.cut(df['risk_score'], bins=[-1, 30, 60, float('inf')], labels=['Low', 'Medium', 'High'])
+    df['risk_level'] = pd.cut(df['risk_score'], bins=[-1, 0.5, 1.0, float('inf')], labels=['Low', 'Medium', 'High'])
     st.altair_chart(
         alt.Chart(df).mark_bar().encode(
             x=alt.X('risk_level:N', title='Risk Level'),
@@ -184,5 +192,4 @@ def run_gps_signal_analysis(gpx_data, radius=50):
         use_container_width=True
     )
 
-    # ────── Download
-    st.download_button("⬇️ Download Buildings CSV", buildings_df.to_csv(index=False), file_name="buildings.csv")
+    st.download_button("⬇️ Download Buildings CSV", filtered_buildings_df.to_csv(index=False), file_name="buildings.csv")
