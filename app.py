@@ -11,6 +11,7 @@ from components.ui.map_display import update_display_route_map
 from components.ui.stats_panel import show_stats
 from components.ui.segment_details import show_segment_summary_and_details
 from components.ui.legend import display_legend
+from components.ui.pace_analysis import run_pace_analysis  # <-- added
 
 from utils.gps_signal_analysis import run_gps_signal_analysis
 
@@ -45,7 +46,7 @@ if gpx_data:
         st.error(f"❌ Error processing GPX file: {e}")
 
 # ───────────────────────── TABS
-tab1, tab2 = st.tabs(["🏔️ Hills & Climbs", "📡 GPS Signal Quality"])
+tab1, tab2, tab3 = st.tabs(["🏔️ Hills & Climbs", "📡 GPS Signal Quality", "🏃‍♂️ Pace Analysis"])
 
 # ───────────────────────── TAB 1
 with tab1:
@@ -111,5 +112,16 @@ with tab1:
 with tab2:
     if df_reduced is not None:
         run_gps_signal_analysis(df_reduced)
+    else:
+        st.info("📂 Upload or select a GPX file to begin.")
+
+# ───────────────────────── TAB 3
+with tab3:
+    if df_reduced is not None:
+        try:
+            df_pace = df_reduced[["lat", "lon", "time"]].copy()
+            run_pace_analysis(df_pace)
+        except Exception as e:
+            st.error(f"❌ Error processing GPX for pace analysis: {e}")
     else:
         st.info("📂 Upload or select a GPX file to begin.")
