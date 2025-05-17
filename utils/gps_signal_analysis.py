@@ -11,7 +11,7 @@ from sklearn.neighbors import BallTree
 import numpy as np
 
 
-def run_gps_signal_analysis(df, radius=25):
+def run_gps_signal_analysis(df, radius=10):
     st.title("📡 GPS Signal Quality Analyzer")
 
     if df.empty:
@@ -41,22 +41,26 @@ def run_gps_signal_analysis(df, radius=25):
         );
         out center;
         """
-        urls = [
+
+        overpass_endpoints = [
             "http://overpass-api.de/api/interpreter",
-            "https://overpass.kumi.systems/api/interpreter"
+            "https://overpass.kumi.systems/api/interpreter",
+            "https://overpass.openstreetmap.ru/api/interpreter",
         ]
-        raw_data = None
-        for overpass_url in urls:
+
+        response = None
+        for endpoint in overpass_endpoints:
             try:
-                response = requests.get(overpass_url, params={'data': query}, timeout=60)
+                response = requests.get(endpoint, params={'data': query}, timeout=25)
                 response.raise_for_status()
                 raw_data = response.json()
-                break  # success
+                break
             except Exception as e:
-                st.warning(f"Trying Overpass endpoint failed: {overpass_url}")
+                st.warning(f"❌ Overpass endpoint failed: {endpoint} — {e}")
+                continue
 
-        if raw_data is None:
-            st.error("All Overpass API endpoints failed.")
+        if response is None:
+            st.error("❌ All Overpass API endpoints failed. Try again later.")
             return
 
         buildings = []
@@ -140,7 +144,7 @@ def run_gps_signal_analysis(df, radius=25):
 
     # ────── Map
     center = [df['lat'].mean(), df['lon'].mean()]
-    m = folium.Map(location=center, zoom_start=13)
+    m = folium.Map(location=center, zoom_start=14)
 
     for i in range(len(df) - 1):
         lat1, lon1 = df.loc[i, ['lat', 'lon']]
