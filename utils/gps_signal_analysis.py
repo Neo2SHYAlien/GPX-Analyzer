@@ -11,7 +11,7 @@ from sklearn.neighbors import BallTree
 import numpy as np
 
 
-def run_gps_signal_analysis(df, radius=20):
+def run_gps_signal_analysis(df, radius=25):
     st.title("📡 GPS Signal Quality Analyzer")
 
     if df.empty:
@@ -33,7 +33,6 @@ def run_gps_signal_analysis(df, radius=20):
     if bbox_key in st.session_state['building_cache']:
         buildings_df = st.session_state['building_cache'][bbox_key]
     else:
-        overpass_url = "http://overpass-api.de/api/interpreter"
         query = f"""
         [out:json];
         (
@@ -42,12 +41,22 @@ def run_gps_signal_analysis(df, radius=20):
         );
         out center;
         """
-        try:
-            response = requests.get(overpass_url, params={'data': query}, timeout=25)
-            response.raise_for_status()
-            raw_data = response.json()
-        except Exception as e:
-            st.error(f"Overpass API error: {e}")
+        urls = [
+            "http://overpass-api.de/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter"
+        ]
+        raw_data = None
+        for overpass_url in urls:
+            try:
+                response = requests.get(overpass_url, params={'data': query}, timeout=60)
+                response.raise_for_status()
+                raw_data = response.json()
+                break  # success
+            except Exception as e:
+                st.warning(f"Trying Overpass endpoint failed: {overpass_url}")
+
+        if raw_data is None:
+            st.error("All Overpass API endpoints failed.")
             return
 
         buildings = []
