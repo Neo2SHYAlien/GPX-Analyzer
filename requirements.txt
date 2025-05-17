@@ -1,7 +1,11 @@
-streamlit 
-gpxpy 
-geopy 
-folium 
-streamlit-folium 
-matplotlib 
+streamlit
+gpxpy
+geopy
+folium
+streamlit-folium
+matplotlib
 pandas
+scikit-learn
+numpy
+altair
+branca
