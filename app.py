@@ -1,21 +1,20 @@
-import streamlit as st
 import os
 
-from components.core.logging import Timer
-from components.core.gpx_parser import parse_gpx
-from components.core.utils import classify_climb_category
-from components.core.climb_detector import detect_significant_segments
+import streamlit as st
 
+from components.core.climb_detector import detect_significant_segments
+from components.core.gpx_parser import parse_gpx
+from components.core.logging import Timer
+from components.core.utils import classify_climb_category
 from components.ui.elevation_chart import (
     get_smoothed_grade,
     update_plot_elevation_colored_by_slope,
 )
-from components.ui.map_display import update_display_route_map
-from components.ui.stats_panel import show_stats
-from components.ui.segment_details import show_segment_summary_and_details
 from components.ui.legend import display_legend
+from components.ui.map_display import update_display_route_map
 from components.ui.pace_analysis import run_pace_analysis  # <-- added
-
+from components.ui.segment_details import show_segment_summary_and_details
+from components.ui.stats_panel import show_stats
 from utils.gps_signal_analysis import run_gps_signal_analysis
 
 st.set_page_config(layout="wide", page_title="GPX Analyzer 📍")

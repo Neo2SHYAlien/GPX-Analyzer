@@ -1,5 +1,6 @@
 import folium
 from streamlit_folium import st_folium
+
 from components.core.utils import get_color
 from components.ui.elevation_chart import get_smoothed_grade
 

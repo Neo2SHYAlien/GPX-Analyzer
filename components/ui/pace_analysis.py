@@ -1,9 +1,9 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
 import altair as alt
-from geopy.distance import geodesic
 import folium
+import numpy as np
+import pandas as pd
+import streamlit as st
+from geopy.distance import geodesic
 from streamlit_folium import st_folium
 
 
