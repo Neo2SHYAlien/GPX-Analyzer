@@ -1,7 +1,7 @@
 from streamlit.components.v1 import html
 
 
-def display_legend():
+def display_legend() -> None:
     legend_html = """
     <div style='padding:10px; background:white; border-radius:8px; font-size:14px;
                 box-shadow: 0 0 8px rgba(0,0,0,0.2); width: fit-content;'>

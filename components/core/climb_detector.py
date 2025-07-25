@@ -2,7 +2,11 @@ import pandas as pd
 
 
 def detect_significant_segments(
-    df, kind="climb", min_gain=30, min_slope=3, min_length=300
+    df,
+    kind: str = "climb",
+    min_gain: int = 30,
+    min_slope: int = 3,
+    min_length: int = 300,
 ):
     segments = []
     in_segment = False

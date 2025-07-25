@@ -11,7 +11,7 @@ def update_display_route_map(
     climbs_df=None,
     descents_df=None,
     color_by_slope=True,
-):
+) -> None:
     df["plot_grade"] = get_smoothed_grade(df)
     coords = df[["lat", "lon"]].values.tolist()
 
