@@ -1,5 +1,5 @@
-import streamlit as st
 import matplotlib.pyplot as plt
+import streamlit as st
 
 
 def show_segment_summary_and_details(df, full_df, kind="climb"):

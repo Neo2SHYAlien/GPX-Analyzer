@@ -1,7 +1,8 @@
 import gpxpy
-import pandas as pd
 import numpy as np
+import pandas as pd
 from geopy.distance import geodesic
+
 from .stats import compute_gpx_stats
 
 

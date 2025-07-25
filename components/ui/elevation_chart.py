@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import streamlit as st
+
 from components.core.utils import apply_slope_smoothing, get_color
 
 
