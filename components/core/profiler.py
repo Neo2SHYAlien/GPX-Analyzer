@@ -1,6 +1,7 @@
 import time
 import os
 
+
 class Timer:
     def __init__(self, log_file="execution_log.txt"):
         self.start = time.perf_counter()
@@ -16,4 +17,3 @@ class Timer:
         with open(self.log_file, "a") as f:
             f.write(message + "\n")
         self.start = now
-

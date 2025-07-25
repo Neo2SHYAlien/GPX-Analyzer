@@ -6,7 +6,10 @@ from components.core.gpx_parser import parse_gpx
 from components.core.utils import classify_climb_category
 from components.core.climb_detector import detect_significant_segments
 
-from components.ui.elevation_chart import get_smoothed_grade, update_plot_elevation_colored_by_slope
+from components.ui.elevation_chart import (
+    get_smoothed_grade,
+    update_plot_elevation_colored_by_slope,
+)
 from components.ui.map_display import update_display_route_map
 from components.ui.stats_panel import show_stats
 from components.ui.segment_details import show_segment_summary_and_details
@@ -46,7 +49,9 @@ if gpx_data:
         st.error(f"❌ Error processing GPX file: {e}")
 
 # ───────────────────────── TABS
-tab1, tab2, tab3 = st.tabs(["🏔️ Hills & Climbs", "📡 GPS Signal Quality", "🏃‍♂️ Pace Analysis"])
+tab1, tab2, tab3 = st.tabs(
+    ["🏔️ Hills & Climbs", "📡 GPS Signal Quality", "🏃‍♂️ Pace Analysis"]
+)
 
 # ───────────────────────── TAB 1
 with tab1:
@@ -61,22 +66,49 @@ with tab1:
 
         for seg_df, is_climb in [(climbs_df, True), (descents_df, False)]:
             if not seg_df.empty:
-                seg_df["category"] = seg_df.apply(lambda row: classify_climb_category(row["length_m"], abs(row["avg_slope"])), axis=1)
-                seg_df["max_slope"] = seg_df.apply(lambda row: df_reduced["plot_grade"].iloc[row["start_idx"]:row["end_idx"]+1].max(), axis=1)
-                seg_df["min_slope"] = seg_df.apply(lambda row: df_reduced["plot_grade"].iloc[row["start_idx"]:row["end_idx"]+1].min(), axis=1)
+                seg_df["category"] = seg_df.apply(
+                    lambda row: classify_climb_category(
+                        row["length_m"], abs(row["avg_slope"])
+                    ),
+                    axis=1,
+                )
+                seg_df["max_slope"] = seg_df.apply(
+                    lambda row: df_reduced["plot_grade"]
+                    .iloc[row["start_idx"] : row["end_idx"] + 1]
+                    .max(),
+                    axis=1,
+                )
+                seg_df["min_slope"] = seg_df.apply(
+                    lambda row: df_reduced["plot_grade"]
+                    .iloc[row["start_idx"] : row["end_idx"] + 1]
+                    .min(),
+                    axis=1,
+                )
 
         t.log("Categorized and enriched segments")
 
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("🗺️ Route Map")
-            update_display_route_map(df_reduced, tile_style="OpenStreetMap", climbs_df=climbs_df, descents_df=descents_df, color_by_slope=True)
+            update_display_route_map(
+                df_reduced,
+                tile_style="OpenStreetMap",
+                climbs_df=climbs_df,
+                descents_df=descents_df,
+                color_by_slope=True,
+            )
             display_legend()
             t.log("Rendered map")
 
         with col2:
             st.subheader("📈 Elevation Profile")
-            update_plot_elevation_colored_by_slope(df_reduced, climbs_df=climbs_df, descents_df=descents_df, color_by_slope=True, simplified=False)
+            update_plot_elevation_colored_by_slope(
+                df_reduced,
+                climbs_df=climbs_df,
+                descents_df=descents_df,
+                color_by_slope=True,
+                simplified=False,
+            )
             t.log("Rendered elevation chart")
             st.subheader("📊 Statistics")
             show_stats(stats)
@@ -87,15 +119,37 @@ with tab1:
         with col1:
             if not climbs_df.empty:
                 st.markdown("**Climbs**")
-                st.dataframe(climbs_df[["start_km", "end_km", "elev_gain", "length_m", "avg_slope", "category"]],
-                             use_container_width=True)
+                st.dataframe(
+                    climbs_df[
+                        [
+                            "start_km",
+                            "end_km",
+                            "elev_gain",
+                            "length_m",
+                            "avg_slope",
+                            "category",
+                        ]
+                    ],
+                    use_container_width=True,
+                )
             else:
                 st.info("No climbs detected.")
         with col2:
             if not descents_df.empty:
                 st.markdown("**Descents**")
-                st.dataframe(descents_df[["start_km", "end_km", "elev_loss", "length_m", "avg_slope", "category"]],
-                             use_container_width=True)
+                st.dataframe(
+                    descents_df[
+                        [
+                            "start_km",
+                            "end_km",
+                            "elev_loss",
+                            "length_m",
+                            "avg_slope",
+                            "category",
+                        ]
+                    ],
+                    use_container_width=True,
+                )
             else:
                 st.info("No descents detected.")
 
@@ -104,7 +158,9 @@ with tab1:
         show_segment_summary_and_details(descents_df, df_reduced, kind="descent")
 
         with open("execution_log.txt", "r") as f:
-            st.download_button("📥 Download Log", data=f.read(), file_name="execution_log.txt")
+            st.download_button(
+                "📥 Download Log", data=f.read(), file_name="execution_log.txt"
+            )
     else:
         st.info("📂 Upload or select a GPX file to begin.")
 
