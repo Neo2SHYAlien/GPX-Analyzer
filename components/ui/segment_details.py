@@ -1,5 +1,6 @@
-import streamlit as st
 import matplotlib.pyplot as plt
+import streamlit as st
+
 
 def show_segment_summary_and_details(df, full_df, kind="climb"):
     if df.empty:
@@ -7,7 +8,7 @@ def show_segment_summary_and_details(df, full_df, kind="climb"):
         return
 
     for i, row in df.iterrows():
-        title = f"{kind.capitalize()} {i+1} • {row['length_m']:.0f} m, {row.get('elev_gain', row.get('elev_loss', 0)):.0f} m"
+        title = f"{kind.capitalize()} {i + 1} • {row['length_m']:.0f} m, {row.get('elev_gain', row.get('elev_loss', 0)):.0f} m"
         summary = (
             f"📍 **Start:** {row['start_km']:.2f} km\n"
             f"🏁 **End:** {row['end_km']:.2f} km\n"
@@ -22,7 +23,7 @@ def show_segment_summary_and_details(df, full_df, kind="climb"):
         with st.expander(f"🔽 {title}"):
             st.markdown(summary)
             st.markdown("**Distribución de pendientes en el tramo:**")
-            grades = full_df["plot_grade"].iloc[row["start_idx"]:row["end_idx"]+1]
+            grades = full_df["plot_grade"].iloc[row["start_idx"] : row["end_idx"] + 1]
             fig, ax = plt.subplots(figsize=(6, 2.5))
             ax.hist(grades, bins=15, color="gray", edgecolor="black")
             ax.set_xlabel("Pendiente (%)")
