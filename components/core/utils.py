@@ -1,4 +1,4 @@
-def get_color(grade):
+def get_color(grade) -> str:
     if grade >= 18:
         return "#8B0000"  # Dark Red
     elif grade >= 10:
@@ -15,7 +15,7 @@ def get_color(grade):
         return "#00008B"  # Dark Blue
 
 
-def apply_slope_smoothing(df, target_meters=300):
+def apply_slope_smoothing(df, target_meters: int = 300):
     meters_per_point = df["distance"].iloc[-1] / len(df)
     window = max(3, int(target_meters / meters_per_point))
     df["plot_grade"] = (
@@ -24,7 +24,7 @@ def apply_slope_smoothing(df, target_meters=300):
     return df
 
 
-def classify_climb_category(length_m, avg_slope):
+def classify_climb_category(length_m, avg_slope) -> str:
     length_km = length_m / 1000
     if length_km >= 10 and avg_slope >= 6:
         return "Hors Catégorie"

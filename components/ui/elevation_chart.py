@@ -9,8 +9,12 @@ def get_smoothed_grade(df):
 
 
 def update_plot_elevation_colored_by_slope(
-    df, climbs_df=None, descents_df=None, color_by_slope=True, simplified=False
-):
+    df,
+    climbs_df=None,
+    descents_df=None,
+    color_by_slope: bool = True,
+    simplified: bool = False,
+) -> None:
     st.markdown("*Slope smoothed over ~300 meters*")
     df = apply_slope_smoothing(df)
 
@@ -28,7 +32,7 @@ def update_plot_elevation_colored_by_slope(
     st.pyplot(fig)
 
 
-def _draw_simplified_segments(ax, df, climbs_df, descents_df):
+def _draw_simplified_segments(ax, df, climbs_df, descents_df) -> None:
     ax.plot(df["distance"] / 1000, df["ele"], color="#999999", linewidth=1.5, alpha=0.7)
 
     for segment_df, color in [(climbs_df, "#FFA500"), (descents_df, "#87CEFA")]:
@@ -43,7 +47,9 @@ def _draw_simplified_segments(ax, df, climbs_df, descents_df):
                 )
 
 
-def _draw_detailed_colored_profile(ax, df, climbs_df, descents_df, color_by_slope):
+def _draw_detailed_colored_profile(
+    ax, df, climbs_df, descents_df, color_by_slope
+) -> None:
     for i in range(1, len(df)):
         x = df["distance"].iloc[i - 1 : i + 1] / 1000
         y = df["ele"].iloc[i - 1 : i + 1]

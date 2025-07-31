@@ -11,7 +11,7 @@ from sklearn.neighbors import BallTree
 import numpy as np
 
 
-def run_gps_signal_analysis(df, radius=10):
+def run_gps_signal_analysis(df, radius: int = 10) -> None:
     st.title("📡 GPS Signal Quality Analyzer")
 
     if df.empty:

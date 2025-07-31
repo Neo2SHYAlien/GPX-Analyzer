@@ -6,7 +6,7 @@ from geopy.distance import geodesic
 from .stats import compute_gpx_stats
 
 
-def parse_gpx(gpx_content, max_points_per_km=20):
+def parse_gpx(gpx_content, max_points_per_km: int = 20):
     gpx = gpxpy.parse(gpx_content)
     data = []
 
@@ -58,7 +58,7 @@ def parse_gpx(gpx_content, max_points_per_km=20):
     return df, stats
 
 
-def reduce_points_by_density(df, max_points_per_km):
+def reduce_points_by_density(df, max_points_per_km: int):
     total_km = df["distance"].iloc[-1] / 1000
     max_points = int(total_km * max_points_per_km)
     if len(df) <= max_points:
